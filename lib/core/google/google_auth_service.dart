@@ -101,7 +101,7 @@ class GoogleAuthService {
       final client = autoRefreshingClient(ClientId(id, secret.isEmpty ? null : secret), creds, _base!);
       _client = client;
       _updates?.cancel();
-      _updates = client.credentialUpdates.listen(_persist);
+      _updates = client.credentialUpdates.listen((c) => _persist(c).catchError((_) {}));
       state.value = GoogleAuthState(connected: true, email: knownEmail);
       if (knownEmail == null || knownEmail.isEmpty) unawaited(_resolveEmail());
     } catch (e) {
@@ -161,10 +161,19 @@ class GoogleAuthService {
         baseClient: _base,
       ).timeout(const Duration(minutes: 5));
       _client = client;
-      await _persist(client.credentials);
-      _updates?.cancel();
-      _updates = client.credentialUpdates.listen(_persist);
-      state.value = const GoogleAuthState(connected: true, busy: false);
+      // Saving the token can fail on a Mac build that is not signed with a
+      // Developer ID (Keychain refuses, code -34018). Stay signed in for this
+      // session rather than failing the whole sign-in.
+      String? warning;
+      try {
+        await _persist(client.credentials);
+        _updates?.cancel();
+        _updates = client.credentialUpdates.listen((c) => _persist(c).catchError((_) {}));
+      } catch (e) {
+        debugPrint('Could not store Google credentials: $e');
+        warning = 'Signed in for this session only — this computer could not save the login, so you will need to connect again after restarting.';
+      }
+      state.value = GoogleAuthState(connected: true, busy: false, error: warning);
       await _resolveEmail();
       return true;
     } on TimeoutException {
@@ -251,7 +260,13 @@ class GoogleAuthService {
   gdrive.DriveApi get drive => gdrive.DriveApi(requireClient());
 
   Future<void> _persist(AccessCredentials creds) async {
-    await _storage.write(key: _credsKey, value: jsonEncode(creds.toJson()));
+    try {
+      await _storage.write(key: _credsKey, value: jsonEncode(creds.toJson()));
+    } catch (e) {
+      // Token refreshes keep working in memory; only persistence is lost.
+      debugPrint('Could not store Google credentials: $e');
+      rethrow;
+    }
   }
 
   Future<void> _resolveEmail() async {
