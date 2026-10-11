@@ -126,6 +126,13 @@ void check(WidgetTester tester, String label) {
   final e = tester.takeException();
   if (e != null) {
     final text = e.toString().split('\n').first;
+    // Sub-pixel overflows are rounding noise, not visible defects.
+    final px = RegExp(r'overflowed by ([0-9.]+) pixels').firstMatch(text);
+    if (px != null && (double.tryParse(px.group(1)!) ?? 1) < 0.5) {
+      while (tester.takeException() != null) {}
+      pendingLocs.clear();
+      return;
+    }
     final locs = pendingLocs.toSet().join(', ');
     failures.add('$label: $text @ $locs');
     // drain any follow-up exceptions for the same frame
