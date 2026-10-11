@@ -153,6 +153,9 @@ class _MobileShell extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        // Borderless: same colour as the page so the header melts into it.
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
         toolbarHeight: 58,
         titleSpacing: 16,
         title: isDashboard
@@ -215,10 +218,6 @@ class _MobileShell extends ConsumerWidget {
             ),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: theme.colorScheme.outline),
-        ),
       ),
       body: child,
       floatingActionButton:
