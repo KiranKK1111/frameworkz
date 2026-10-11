@@ -83,9 +83,13 @@ class BzActionRow extends StatelessWidget {
       }
       return BzResponsiveGrid(minItemWidth: 140, maxColumns: 2, gap: gap, children: children);
     }
-    return Row(
-      mainAxisAlignment: alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: children.expand((c) => [c, SizedBox(width: gap)]).toList()..removeLast(),
+    // A Wrap never overflows: when a card is narrow the buttons drop to a
+    // second line instead of being clipped.
+    return Wrap(
+      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+      spacing: gap,
+      runSpacing: gap,
+      children: children,
     );
   }
 }

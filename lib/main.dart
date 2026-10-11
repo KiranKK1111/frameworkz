@@ -83,6 +83,9 @@ Future<void> main() async {
   await _boot('google session', container.read(googleAuthProvider).restore(knownEmail: settings.googleEmail));
 
   // ------------------------------------------------------------- scheduler
+  // Excel workbook mirror: writes every change to the user's .xlsx.
+  container.read(workbookProvider).start();
+
   final scheduler = container.read(schedulerProvider);
   scheduler.events.listen((ev) {
     void open() {

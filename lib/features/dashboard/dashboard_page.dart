@@ -20,6 +20,10 @@ import '../followups/followup_actions.dart';
 import '../followups/followup_form_dialog.dart';
 import '../leads/lead_form_dialog.dart';
 import '../leads/leads_page.dart';
+import '../settings/workbook_actions.dart';
+
+/// The first-launch workbook prompt is shown once per app run.
+bool _workbookPromptShown = false;
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -48,6 +52,14 @@ class DashboardPage extends ConsumerWidget {
 
     final showOnboarding = !settings.onboardingDone;
     final hasImported = leads.any((l) => l.externalKey != null);
+
+    if (!settings.workbookConfigured && !settings.workbookPromptOff && !_workbookPromptShown) {
+      _workbookPromptShown = true;
+      // Let the intro finish first.
+      Future.delayed(const Duration(milliseconds: 3300), () {
+        if (context.mounted) showWorkbookPrompt(context, ref);
+      });
+    }
 
     final phone = context.isPhone;
     final subtitle = '${Fmt.weekday(DateTime.now())} · ${counts.attention == 0 ? 'Nothing waiting on you' : '${Fmt.plural(counts.today, 'follow-up')} today${counts.overdue > 0 ? ', ${counts.overdue} overdue' : ''}${counts.meetingsToday > 0 ? ', ${Fmt.plural(counts.meetingsToday, 'meeting')}' : ''}'}';
@@ -121,6 +133,7 @@ class _OnboardingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final steps = <(bool, String, String, IconData)>[
+      (settings.workbookConfigured, 'Connect your Excel workbook', 'Leads, clients, projects and invoices live in one Excel file you own.', BootstrapIcons.file_earmark_excel),
       (settings.myName.isNotEmpty, 'Set up your profile', 'Your name, studio and signature power every email template.', BootstrapIcons.person_badge),
       (googleConnected, 'Connect Google', 'Calendar reminders, Meet links and Gmail sending — one sign-in.', BootstrapIcons.google),
       (imported, 'Import your Google Sheet', 'Bring in LEADS, CLIENTS, PROJECTS, FOLLOW UPS and FINANCE in one click.', BootstrapIcons.file_earmark_spreadsheet),

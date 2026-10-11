@@ -157,17 +157,35 @@ Future<void> openDialog(WidgetTester tester, String size, String label, Future<v
 }
 
 Future<void> tapText(WidgetTester tester, String size, String text, {bool close = true}) async {
-  final f = find.text(text);
+  var f = find.text(text);
   if (f.evaluate().isEmpty) {
-    failures.add('[$size] missing control "$text"');
+    // Off-screen in a scrolling list? Bring it into view first.
+    try {
+      await tester.scrollUntilVisible(f, 200, scrollable: find.byType(Scrollable).first);
+      await settle(tester, frames: 2);
+    } catch (_) {}
+    f = find.text(text);
+  }
+  if (f.evaluate().isEmpty) {
+    final texts = find.byType(Text).evaluate().map((e) => (e.widget as Text).data ?? '').where((d) => d.isNotEmpty).take(40).join(' | ');
+    failures.add('[$size] missing control "$text" · route=${appRouter.routerDelegate.currentConfiguration.uri} · texts: $texts');
     return;
   }
+  // Off-screen rows would otherwise be "tapped" through the bottom nav bar.
+  try {
+    await tester.ensureVisible(f.first);
+    await settle(tester, frames: 2);
+  } catch (_) {}
   await tester.tap(f.first, warnIfMissed: false);
   await settle(tester);
   check(tester, '[$size] tap "$text"');
   if (close) {
     await closeTop(tester);
     check(tester, '[$size] after closing "$text"');
+    if (find.byType(BottomSheet).evaluate().isNotEmpty || find.byType(Dialog).evaluate().isNotEmpty) {
+      failures.add('[$size] a sheet or dialog is still open after closing "$text"');
+      await closeTop(tester);
+    }
   }
 }
 
@@ -182,6 +200,7 @@ void main() {
     await container.read(settingsStoreProvider).ready;
     await db.setSetting(Keys.profileName, 'Lokesh Kumar');
     await db.setSetting(Keys.profileBusiness, 'Lokesh Films');
+    await db.setSetting(Keys.workbookPromptOff, 'true');
   });
 
   testWidgets('every screen renders without layout errors at every size', (tester) async {
@@ -252,7 +271,7 @@ void main() {
       // ---- settings sections and templates editor on phones open as sheets
       if (s.width < 700) {
         await visit(tester, s.name, Routes.settings);
-        for (final section in ['Profile', 'Follow-up rules', 'Reminders', 'Google account', 'Google Sheets import', 'Appearance & behaviour', 'About']) {
+        for (final section in ['Profile', 'Excel workbook', 'Follow-up rules', 'Reminders', 'Google account', 'Google Sheets import', 'Appearance & behaviour', 'About']) {
           await tapText(tester, s.name, section);
         }
         await visit(tester, s.name, Routes.templates);
@@ -261,7 +280,7 @@ void main() {
         await tapText(tester, s.name, 'New', close: true);
       } else {
         await visit(tester, s.name, Routes.settings);
-        for (final section in ['Follow-up rules', 'Reminders', 'Google account', 'Google Sheets import', 'Appearance & behaviour', 'About']) {
+        for (final section in ['Excel workbook', 'Follow-up rules', 'Reminders', 'Google account', 'Google Sheets import', 'Appearance & behaviour', 'About']) {
           await tapText(tester, s.name, section, close: false);
         }
         final bell = find.byTooltip('Notifications');

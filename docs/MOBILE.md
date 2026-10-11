@@ -71,8 +71,12 @@ The scopes requested are the same as on desktop (Calendar events, Gmail send, Sh
 
 ## Data on multiple devices
 
-Each installation keeps its own SQLite database. Desktop and phone do **not**
-share data yet. Two options, to decide before shipping the phone app:
+Each installation keeps its own data (SQLite under the hood, mirrored to the
+user's `FrameWorkz.xlsx` workbook — Settings → Excel workbook). Desktop and
+phone do **not** share data automatically yet. Today the workbook is the bridge:
+share it from the phone (Settings → Excel workbook → Share) and use
+"Read workbook" / "Open existing…" on the other device; rows are matched by
+their ID column. Two options for true sync, to decide later:
 
 1. **Drive-file sync (keeps the no-server design).** Upload the SQLite file to the
    user's Drive `appDataFolder` after changes, download on launch, last writer

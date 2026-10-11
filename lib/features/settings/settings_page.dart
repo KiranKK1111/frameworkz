@@ -7,11 +7,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/responsive.dart';
 import '../../app/theme/bz_colors.dart';
+import '../../core/excel/workbook_service.dart';
 import '../../core/platform.dart';
 import '../../core/providers.dart';
 import '../../core/utils/format.dart';
@@ -23,8 +23,9 @@ import '../../ui/widgets/bz_form.dart';
 import '../../ui/widgets/bz_misc.dart';
 import '../../ui/widgets/bz_modal.dart';
 import '../../ui/widgets/bz_toast.dart';
+import 'workbook_actions.dart';
 
-enum _Section { profile, rules, reminders, google, sheets, app, about }
+enum _Section { profile, workbook, rules, reminders, google, sheets, app, about }
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -40,15 +41,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final theme = Theme.of(context);
     final items = <(_Section, String, IconData, String)>[
       (_Section.profile, 'Profile', BootstrapIcons.person_badge, 'Name, studio, signature'),
+      (_Section.workbook, 'Excel workbook', BootstrapIcons.file_earmark_excel, 'Where your data lives'),
       (_Section.rules, 'Follow-up rules', BootstrapIcons.sliders, 'Days per status'),
       (_Section.reminders, 'Reminders', BootstrapIcons.bell, 'Daily time, meeting alerts'),
       (_Section.google, 'Google account', BootstrapIcons.google, 'Calendar, Meet, Gmail'),
       (_Section.sheets, 'Google Sheets import', BootstrapIcons.file_earmark_spreadsheet, 'Migrate & sync the form'),
       (_Section.app, 'Appearance & behaviour', BootstrapIcons.display, 'Theme, tray, startup'),
-      (_Section.about, 'About', BootstrapIcons.info_circle, 'Version, data location'),
+      (_Section.about, 'About', BootstrapIcons.info_circle, 'Version, workbook'),
     ];
     Widget sectionWidget(_Section s) => switch (s) {
           _Section.profile => const _ProfileSection(),
+          _Section.workbook => const _WorkbookSection(),
           _Section.rules => const _RulesSection(),
           _Section.reminders => const _RemindersSection(),
           _Section.google => const _GoogleSection(),
@@ -635,31 +638,187 @@ class _AppSection extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------- workbook
+class _WorkbookSection extends ConsumerWidget {
+  const _WorkbookSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final s = ref.watch(settingsSnapshotProvider);
+    final st = ref.watch(workbookStatusProvider).value ?? const WorkbookStatus();
+    final connected = s.workbookConfigured;
+    final desktop = AppPlatform.isDesktop;
+    final device = AppPlatform.isIOS ? 'iPhone' : 'phone';
+    final tone = connected ? (st.error != null ? BzColors.danger : BzColors.success) : BzColors.warning;
+
+    final banner = Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.35)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 40, height: 40, decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(10)), alignment: Alignment.center, child: const Icon(BootstrapIcons.file_earmark_excel, size: 18, color: BzColors.success)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(connected ? 'Connected' : 'Not connected yet', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 2),
+              Text(
+                connected ? (desktop ? s.workbookPath : 'FrameWorkz.xlsx on this $device') : 'Create a workbook or open one you already have.',
+                style: theme.textTheme.bodySmall,
+              ),
+              if (connected && st.lastSyncAt != null) Text('Last saved ${Fmt.timeAgo(st.lastSyncAt!)}', style: theme.textTheme.bodySmall),
+              if (st.error != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(st.error!, style: theme.textTheme.bodySmall?.copyWith(color: BzColors.danger))),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        if (connected)
+          BzActionRow(alignEnd: false, [
+            BzButton(
+              label: st.syncing ? 'Saving…' : 'Save now',
+              icon: BootstrapIcons.cloud_check,
+              loading: st.syncing,
+              onPressed: st.syncing
+                  ? null
+                  : () async {
+                      final ok = await ref.read(workbookProvider).syncNow();
+                      if (ok) BzToasts.success('Workbook saved');
+                    },
+            ),
+            if (desktop)
+              BzButton(label: 'Open folder', icon: BootstrapIcons.folder2_open, variant: BzVariant.light, onPressed: () => revealWorkbook(ref))
+            else
+              BzButton(label: 'Share', icon: BootstrapIcons.share, variant: BzVariant.light, onPressed: () => shareWorkbook(context, ref)),
+          ])
+        else
+          BzActionRow(alignEnd: false, [
+            BzButton(label: 'Open existing…', icon: BootstrapIcons.folder2_open, variant: BzVariant.light, onPressed: () => openExistingWorkbook(context, ref)),
+            BzButton(label: 'Create workbook', icon: BootstrapIcons.plus_lg, onPressed: () => createWorkbook(context, ref)),
+          ]),
+      ]),
+    );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      BzCard(
+        title: 'Excel workbook',
+        subtitle: 'Everything you add in FrameWorkz is saved into one Excel file that is yours to keep.',
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          banner,
+          if (connected) ...[
+            const SizedBox(height: 14),
+            BzSwitchTile(
+              title: 'Save changes automatically',
+              subtitle: 'Each edit is written to the workbook a moment later.',
+              icon: BootstrapIcons.arrow_repeat,
+              value: s.workbookAutoSync,
+              onChanged: (v) => ref.setSetting(Keys.workbookAutoSync, '$v'),
+            ),
+            const SizedBox(height: 8),
+            Text('Changed something in Excel? Read the file back and those edits come into FrameWorkz. Rows are matched by the ID column.', style: theme.textTheme.bodySmall),
+            const SizedBox(height: 10),
+            BzActionRow(alignEnd: false, [
+              BzButton(label: 'Read workbook', icon: BootstrapIcons.box_arrow_in_down, variant: BzVariant.light, onPressed: () => readWorkbookNow(context, ref)),
+              if (desktop)
+                BzButton(label: 'Change location…', icon: BootstrapIcons.folder_symlink, variant: BzVariant.light, onPressed: () => createWorkbook(context, ref))
+              else
+                BzButton(label: 'Read another', icon: BootstrapIcons.folder2_open, variant: BzVariant.light, onPressed: () => openExistingWorkbook(context, ref)),
+            ]),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BzButton(
+                label: 'Disconnect workbook',
+                link: true,
+                variant: BzVariant.danger,
+                size: BzSize.sm,
+                onPressed: () async {
+                  final ok = await showBzConfirm(context, title: 'Disconnect the workbook?', message: 'The file stays where it is. FrameWorkz just stops writing to it.', confirmLabel: 'Disconnect');
+                  if (ok) await ref.read(workbookProvider).disconnect();
+                },
+              ),
+            ),
+          ],
+        ]),
+      ),
+      const SizedBox(height: 16),
+      BzCard(
+        title: 'What is inside',
+        subtitle: 'Five sheets, one row per record, with the same IDs you see in the app.',
+        child: Column(children: [
+          for (final (name, what, icon) in const [
+            ('Leads', 'Every enquiry with its status, value and next follow-up', BootstrapIcons.funnel),
+            ('Clients', 'Contact details, service, monthly value and status', BootstrapIcons.people),
+            ('Projects', 'Shoot dates, deadlines, deliverables and payment status', BootstrapIcons.camera_reels),
+            ('Follow-ups', 'Calls, meetings and reminders with their outcome', BootstrapIcons.bell),
+            ('Invoices', 'Amounts, due dates, payments received', BootstrapIcons.receipt),
+          ])
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 10),
+                SizedBox(width: 86, child: Text(name, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+                Expanded(child: Text(what, style: theme.textTheme.bodySmall)),
+              ]),
+            ),
+        ]),
+      ),
+    ]);
+  }
+}
+
 // ------------------------------------------------------------------- about
 class _AboutSection extends ConsumerWidget {
   const _AboutSection();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final s = ref.watch(settingsSnapshotProvider);
+    final os = switch (Platform.operatingSystem) {
+      'android' => 'Android',
+      'ios' => 'iOS',
+      'windows' => 'Windows',
+      'macos' => 'macOS',
+      'linux' => 'Linux',
+      _ => Platform.operatingSystem,
+    };
+    final workbook = !s.workbookConfigured
+        ? 'Not connected'
+        : (AppPlatform.isDesktop ? s.workbookPath : 'FrameWorkz.xlsx on this ${AppPlatform.isIOS ? 'iPhone' : 'phone'}');
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       BzCard(
         title: 'FrameWorkz',
         subtitle: 'Business OS for creative studios — leads, follow-ups, clients, projects and finance in one place.',
         child: FutureBuilder(
-          future: Future.wait([PackageInfo.fromPlatform(), getApplicationSupportDirectory()]),
+          future: PackageInfo.fromPlatform(),
           builder: (context, snap) {
-            final info = snap.data?[0] as PackageInfo?;
-            final dir = snap.data?[1] as Directory?;
-            final dbPath = dir == null ? '…' : '${dir.path}${Platform.pathSeparator}FrameWorkz${Platform.pathSeparator}frameworkz.sqlite';
-            return Column(children: [
+            final info = snap.data;
+            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               BzKeyValue('Version', info == null ? '…' : '${info.version} (build ${info.buildNumber})', icon: BootstrapIcons.tag),
-              BzKeyValue('Platform', '${Platform.operatingSystem} ${Platform.operatingSystemVersion}', icon: BootstrapIcons.display),
-              BzKeyValue('Data file', dbPath, icon: BootstrapIcons.database, copyable: true, onTap: () {
-                Clipboard.setData(ClipboardData(text: dbPath));
-                BzToasts.info('Path copied');
-              }),
+              BzKeyValue('Platform', os, icon: BootstrapIcons.display),
+              BzKeyValue(
+                'Workbook',
+                workbook,
+                icon: BootstrapIcons.file_earmark_excel,
+                onTap: s.workbookConfigured && AppPlatform.isDesktop
+                    ? () {
+                        Clipboard.setData(ClipboardData(text: s.workbookPath));
+                        BzToasts.info('Path copied');
+                      }
+                    : null,
+              ),
               const Divider(height: 24),
-              Align(alignment: Alignment.centerLeft, child: Text('Everything is stored locally in a single SQLite file. Back it up by copying that file; Google tokens live in the OS keychain and are never written to disk in plain text.', style: theme.textTheme.bodySmall)),
+              Text(
+                s.workbookConfigured
+                    ? 'Your work is saved in your Excel workbook, so it is always yours to open, copy or back up. Your Google sign-in stays in the secure storage of this device.'
+                    : 'Connect an Excel workbook (Settings → Excel workbook) and everything you add is saved into a file you own. Your Google sign-in stays in the secure storage of this device.',
+                style: theme.textTheme.bodySmall,
+              ),
             ]);
           },
         ),

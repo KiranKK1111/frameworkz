@@ -88,6 +88,13 @@ class AppSettingsState {
   int get sheetsIntervalMinutes => _i(Keys.sheetsIntervalMinutes, 10);
   DateTime? get sheetsLastImportAt => DateTime.tryParse(_raw[Keys.sheetsLastImportAt] ?? '');
 
+  // ---------------------------------------------------------------- workbook
+  String get workbookPath => _s(Keys.workbookPath, '');
+  bool get workbookConfigured => workbookPath.isNotEmpty;
+  bool get workbookAutoSync => _b(Keys.workbookAutoSync, true);
+  DateTime? get workbookLastSyncAt => DateTime.tryParse(_raw[Keys.workbookLastSyncAt] ?? '');
+  bool get workbookPromptOff => _b(Keys.workbookPromptOff, false);
+
   // --------------------------------------------------------------------- app
   String get themeMode => _s(Keys.themeMode, 'system');
   bool get minimizeToTray => _b(Keys.minimizeToTray, true);
@@ -135,6 +142,11 @@ class Keys {
   static const sheetsAutoImport = 'sheets.autoImport';
   static const sheetsIntervalMinutes = 'sheets.intervalMinutes';
   static const sheetsLastImportAt = 'sheets.lastImportAt';
+
+  static const workbookPath = 'workbook.path';
+  static const workbookAutoSync = 'workbook.autoSync';
+  static const workbookLastSyncAt = 'workbook.lastSyncAt';
+  static const workbookPromptOff = 'workbook.promptOff';
 
   static const themeMode = 'app.theme';
   static const minimizeToTray = 'app.minimizeToTray';

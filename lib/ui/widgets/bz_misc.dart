@@ -45,7 +45,7 @@ class BzPageHeader extends StatelessWidget {
             children: [
               if (breadcrumb != null) ...[breadcrumb!, const SizedBox(height: 4)],
               if (!phone || phoneTitle) Text(title, style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22)),
-              if (subtitle != null) ...[if (!phone || phoneTitle) const SizedBox(height: 3), Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis)],
+              if (subtitle != null) ...[if (!phone || phoneTitle) const SizedBox(height: 3), Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(fontSize: 13), maxLines: phone ? null : 2, overflow: phone ? null : TextOverflow.ellipsis)],
             ],
           ),
         ),

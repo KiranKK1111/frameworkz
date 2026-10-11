@@ -10,6 +10,7 @@ import 'db/repos.dart';
 import 'google/calendar_service.dart';
 import 'google/gmail_service.dart';
 import 'google/google_auth_service.dart';
+import 'excel/workbook_service.dart';
 import 'google/sheets_import_service.dart';
 import 'notifications/notification_service.dart';
 import 'settings/app_settings.dart';
@@ -155,6 +156,37 @@ final sheetsImportProvider = Provider<SheetsImportService>((ref) {
     invoices: ref.watch(invoicesRepoProvider),
     onNewLead: (lead) async => automation.ensureInitialFollowUp(lead),
   );
+});
+
+final workbookProvider = Provider<WorkbookService>((ref) {
+  final s = WorkbookService(
+    db: ref.watch(databaseProvider),
+    leads: ref.watch(leadsRepoProvider),
+    clients: ref.watch(clientsRepoProvider),
+    projects: ref.watch(projectsRepoProvider),
+    followUps: ref.watch(followUpsRepoProvider),
+    invoices: ref.watch(invoicesRepoProvider),
+    readPath: () => ref.read(settingsStoreProvider).current.workbookPath,
+    readAutoSync: () => ref.read(settingsStoreProvider).current.workbookAutoSync,
+    readLastSync: () => ref.read(settingsStoreProvider).current.workbookLastSyncAt,
+    writeSetting: (k, v) => ref.read(databaseProvider).setSetting(k, v),
+  );
+  ref.onDispose(s.dispose);
+  return s;
+});
+
+/// Live workbook status for the UI.
+final workbookStatusProvider = StreamProvider<WorkbookStatus>((ref) {
+  final s = ref.watch(workbookProvider);
+  final controller = StreamController<WorkbookStatus>();
+  controller.add(s.status.value);
+  void listener() => controller.add(s.status.value);
+  s.status.addListener(listener);
+  ref.onDispose(() {
+    s.status.removeListener(listener);
+    controller.close();
+  });
+  return controller.stream;
 });
 
 final schedulerProvider = Provider<AutomationScheduler>((ref) {

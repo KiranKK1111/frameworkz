@@ -354,20 +354,24 @@ class BzKeyValue extends StatelessWidget {
             fontWeight: FontWeight.w500,
             color: onTap != null && value.isNotEmpty ? BzColors.primary : null,
           ),
-          overflow: TextOverflow.ellipsis,
+          softWrap: true,
         );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-          ],
           SizedBox(
-            width: 118,
-            child: Text(label, style: theme.textTheme.bodySmall),
+            width: icon != null ? 132 : 110,
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(child: Text(label, style: theme.textTheme.bodySmall?.copyWith(height: 1.5))),
+              ],
+            ),
           ),
           Expanded(
             child: onTap != null && value.isNotEmpty

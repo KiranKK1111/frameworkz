@@ -98,10 +98,10 @@ class _TemplatesPageState extends ConsumerState<TemplatesPage> {
 
     final header = BzPageHeader(
       title: 'Email templates',
-      subtitle: 'Each lead status can suggest a template. Placeholders like {{first_name}} are filled in automatically.',
+      subtitle: 'Ready-made emails for every stage. Names, dates and links fill themselves in.',
       icon: BootstrapIcons.envelope_paper,
       actions: [
-        BzButton(label: 'Restore defaults', icon: BootstrapIcons.arrow_counterclockwise, variant: BzVariant.light, onPressed: _restore),
+        BzButton(label: 'Restore', icon: BootstrapIcons.arrow_counterclockwise, variant: BzVariant.light, onPressed: _restore),
         BzButton(label: 'New template', icon: BootstrapIcons.plus_lg, onPressed: () => phone ? _openEditorSheet(context, null) : setState(() => _creating = true)),
       ],
     );
@@ -348,7 +348,7 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
 
     return BzCard(
       title: widget.template == null ? 'New template' : widget.template!.name,
-      subtitle: widget.template?.isBuiltIn == true ? 'Built-in · edits are kept, "Restore defaults" only re-adds deleted ones' : 'Custom template',
+      subtitle: widget.template?.isBuiltIn == true ? 'Built-in · your edits are kept; "Restore" only brings back deleted ones' : 'Custom template',
       actions: actions,
       padding: EdgeInsets.zero,
       fill: true,
