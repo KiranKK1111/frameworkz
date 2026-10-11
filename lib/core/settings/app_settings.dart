@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../domain/enums.dart';
+import '../platform.dart';
 
 /// Typed, immutable view over the key/value settings table.
 ///
@@ -74,7 +75,11 @@ class AppSettingsState {
   String get googleEmail => _s(Keys.googleEmail, '');
   String get googleMobileClientId => _s(Keys.googleMobileClientId, '');
   String get googleServerClientId => _s(Keys.googleServerClientId, '');
-  bool get googleConfigured => googleClientId.isNotEmpty;
+  /// Whether sign-in can be attempted on this platform: desktop needs the
+  /// Desktop-app client id, Android the Web client id, iOS the iOS client id.
+  bool get googleConfigured => AppPlatform.isAndroid
+      ? googleServerClientId.isNotEmpty
+      : (AppPlatform.isIOS ? googleMobileClientId.isNotEmpty : googleClientId.isNotEmpty);
   String get calendarId => _s(Keys.calendarId, 'primary');
   bool get calendarSync => _b(Keys.calendarSync, true);
   bool get calendarInviteContacts => _b(Keys.calendarInviteContacts, false);

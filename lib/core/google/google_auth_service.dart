@@ -60,7 +60,10 @@ class GoogleAuthService {
   final Future<void> Function(String email) onEmailResolved;
 
   static const _credsKey = 'google.credentials';
-  static const _storage = FlutterSecureStorage();
+  // macOS: the data-protection keychain needs a Developer-ID-signed app and
+  // fails with -34018 on ad-hoc signed builds, so use the classic login
+  // keychain there. Windows (DPAPI), Android and iOS are unaffected.
+  static const _storage = FlutterSecureStorage(mOptions: MacOsOptions(usesDataProtectionKeychain: false));
 
   static const List<String> scopes = [
     gcal.CalendarApi.calendarEventsScope,
