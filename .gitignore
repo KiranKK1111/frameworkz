@@ -50,3 +50,8 @@ app.*.map.json
 # Packaging outputs
 installer/dist/
 installer/windows/redist/
+
+# Android release signing (CI writes these from secrets)
+android/key.properties
+*.jks
+*.keystore

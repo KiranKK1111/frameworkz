@@ -51,7 +51,13 @@ compilation is off (its cache files failed to close on Windows), and the Gradle 
 Mobile cannot use the Desktop OAuth client. In the same Google Cloud project:
 
 ### Android
-1. Get the signing fingerprint: `cd android && ./gradlew signingReport` (debug) or from your release keystore.
+1. Get the signing fingerprint of the **release keystore** (the one CI signs with,
+   kept outside the repo in `signing/frameworkz-release.jks`):
+   `keytool -list -v -keystore signing/frameworkz-release.jks -alias frameworkz`.
+   CI only uses it when the repository secrets `ANDROID_KEYSTORE_BASE64`,
+   `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`
+   are set; otherwise the APK is signed with a throwaway debug key whose SHA-1
+   changes every build and Google sign-in cannot work.
 2. Credentials → Create OAuth client ID → **Android**, package `com.frameworkz.frameworkz`, paste the SHA-1.
 3. Credentials → Create OAuth client ID → **Web application** (no redirect URIs needed). Copy its client id and paste it in
    Settings → Google account → "Web client ID" inside the app. Google Sign-In on Android requires this `serverClientId`.
