@@ -65,13 +65,30 @@ class GoogleAuthService {
   // keychain there. Windows (DPAPI), Android and iOS are unaffected.
   static const _storage = FlutterSecureStorage(mOptions: MacOsOptions(usesDataProtectionKeychain: false));
 
+  /// Everything FrameWorkz may touch. Requested once at sign-in so later
+  /// features (Slides proposals, YouTube uploads, Sheets mirroring) never
+  /// need a second consent. Register exactly this list on the OAuth consent
+  /// screen ("Data access") in Google Cloud.
   static const List<String> scopes = [
-    gcal.CalendarApi.calendarEventsScope,
-    gmail.GmailApi.gmailSendScope,
-    gsheets.SheetsApi.spreadsheetsReadonlyScope,
-    gdrive.DriveApi.driveFileScope,
+    gcal.CalendarApi.calendarEventsScope, // events + Meet links (conferenceData)
+    gmail.GmailApi.gmailSendScope, // send templated emails
+    gsheets.SheetsApi.spreadsheetsScope, // read the form sheet, write sheets
+    'https://www.googleapis.com/auth/presentations', // Slides: proposal decks
+    gdrive.DriveApi.driveFileScope, // files/folders FrameWorkz creates
+    'https://www.googleapis.com/auth/youtube.readonly', // channel & video stats
+    'https://www.googleapis.com/auth/youtube.upload', // publish deliverables
     'https://www.googleapis.com/auth/userinfo.email',
     'openid',
+  ];
+
+  /// Human-readable list for the settings screen.
+  static const List<(String, String)> scopeSummary = [
+    ('Calendar', 'create and update events, add Google Meet links'),
+    ('Gmail', 'send emails from your address'),
+    ('Sheets', 'read your form responses, write sheets'),
+    ('Slides', 'create presentations (proposals)'),
+    ('Drive', 'create and manage files and folders made by FrameWorkz'),
+    ('YouTube', 'read channel statistics, upload videos'),
   ];
 
   final ValueNotifier<GoogleAuthState> state = ValueNotifier(const GoogleAuthState());

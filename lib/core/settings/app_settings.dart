@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../domain/enums.dart';
+import '../google/google_defaults.dart';
 import '../platform.dart';
 
 /// Typed, immutable view over the key/value settings table.
@@ -70,11 +71,16 @@ class AppSettingsState {
   bool get overdueDigest => _b(Keys.overdueDigest, true);
 
   // ------------------------------------------------------------------ google
-  String get googleClientId => _s(Keys.googleClientId, '');
-  String get googleClientSecret => _s(Keys.googleClientSecret, '');
+  // Values typed in Settings win; otherwise the ids built into the app.
+  String get googleClientId => _s(Keys.googleClientId, GoogleDefaults.desktopClientId);
+  String get googleClientSecret => _s(Keys.googleClientSecret, GoogleDefaults.desktopClientSecret);
   String get googleEmail => _s(Keys.googleEmail, '');
-  String get googleMobileClientId => _s(Keys.googleMobileClientId, '');
-  String get googleServerClientId => _s(Keys.googleServerClientId, '');
+  String get googleMobileClientId => _s(Keys.googleMobileClientId, GoogleDefaults.iosClientId);
+  String get googleServerClientId => _s(Keys.googleServerClientId, GoogleDefaults.webClientId);
+
+  /// True when the app ships its own client ids for this platform, so the
+  /// user does not have to paste anything.
+  bool get googleBuiltIn => AppPlatform.isAndroid ? GoogleDefaults.hasWeb : (AppPlatform.isIOS ? GoogleDefaults.hasIos : GoogleDefaults.hasDesktop);
   /// Whether sign-in can be attempted on this platform: desktop needs the
   /// Desktop-app client id, Android the Web client id, iOS the iOS client id.
   bool get googleConfigured => AppPlatform.isAndroid

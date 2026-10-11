@@ -427,27 +427,52 @@ class _GoogleSectionState extends ConsumerState<_GoogleSection> {
             }),
           ),
           const SizedBox(height: 16),
-          if (AppPlatform.isDesktop)
-            const BzRow([
-              _SettingText(settingKey: Keys.googleClientId, label: 'OAuth Client ID (Desktop app)', hint: '1234567890-abc.apps.googleusercontent.com', icon: BootstrapIcons.key),
-              _SettingText(settingKey: Keys.googleClientSecret, label: 'OAuth Client Secret', hint: 'GOCSPX-…', icon: BootstrapIcons.shield_lock, obscure: true),
-            ])
-          else
-            const BzRow([
-              _SettingText(settingKey: Keys.googleServerClientId, label: 'Web client ID (required on Android)', hint: '1234567890-web.apps.googleusercontent.com', icon: BootstrapIcons.key, help: 'Create a "Web application" OAuth client and an "Android" client with your SHA-1 in the same project.'),
-              _SettingText(settingKey: Keys.googleMobileClientId, label: 'iOS client ID', hint: '1234567890-ios.apps.googleusercontent.com', icon: BootstrapIcons.apple),
-            ]),
+          Text('What FrameWorkz can do with your account once connected', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          for (final (name, what) in GoogleAuthService.scopeSummary)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Icon(BootstrapIcons.check2_circle, size: 13, color: BzColors.success),
+                const SizedBox(width: 8),
+                SizedBox(width: 72, child: Text(name, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600))),
+                Expanded(child: Text(what, style: theme.textTheme.bodySmall)),
+              ]),
+            ),
           const SizedBox(height: 12),
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
-            title: Text('How to get these (one-time, ~5 minutes)', style: theme.textTheme.titleSmall),
+            initiallyExpanded: !s.googleBuiltIn,
+            title: Text(s.googleBuiltIn ? 'Advanced: use your own Google Cloud project' : 'Set up: OAuth client details', style: theme.textTheme.titleSmall),
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            children: [
+              if (s.googleBuiltIn)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text('FrameWorkz already includes its own credentials, so you can leave these empty. Fill them only to use a different Google Cloud project.', style: theme.textTheme.bodySmall),
+                ),
+              if (AppPlatform.isDesktop)
+                const BzRow([
+                  _SettingText(settingKey: Keys.googleClientId, label: 'OAuth Client ID (Desktop app)', hint: '1234567890-abc.apps.googleusercontent.com', icon: BootstrapIcons.key),
+                  _SettingText(settingKey: Keys.googleClientSecret, label: 'OAuth Client Secret', hint: 'GOCSPX-…', icon: BootstrapIcons.shield_lock, obscure: true),
+                ])
+              else
+                const BzRow([
+                  _SettingText(settingKey: Keys.googleServerClientId, label: 'Web client ID (required on Android)', hint: '1234567890-web.apps.googleusercontent.com', icon: BootstrapIcons.key, help: 'Create a "Web application" OAuth client and an "Android" client with the release SHA-1 in the same project.'),
+                  _SettingText(settingKey: Keys.googleMobileClientId, label: 'iOS client ID', hint: '1234567890-ios.apps.googleusercontent.com', icon: BootstrapIcons.apple),
+                ]),
+            ],
+          ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text('How the Google Cloud project is set up (one-time)', style: theme.textTheme.titleSmall),
             childrenPadding: const EdgeInsets.only(bottom: 8),
             children: [
               _step(theme, 1, 'Open Google Cloud Console → create a project (e.g. "FrameWorkz").', 'https://console.cloud.google.com/projectcreate'),
-              _step(theme, 2, 'APIs & Services → Library: enable Google Calendar API, Gmail API, Google Sheets API and Google Drive API.', 'https://console.cloud.google.com/apis/library'),
-              _step(theme, 3, 'OAuth consent screen: External, add your Gmail address as a test user, add the scopes for Calendar events, Gmail send, Sheets read-only, Drive file.', 'https://console.cloud.google.com/apis/credentials/consent'),
-              _step(theme, 4, 'Credentials → Create credentials → OAuth client ID → Application type "Desktop app". Copy the Client ID and Client Secret here.', 'https://console.cloud.google.com/apis/credentials'),
-              _step(theme, 5, 'Click "Connect Google". A browser opens, you approve, and FrameWorkz receives the token on localhost. Tokens are stored in your OS keychain.', null),
+              _step(theme, 2, 'APIs & Services → Library: enable Google Calendar, Gmail, Google Sheets, Google Slides, Google Drive and YouTube Data API v3.', 'https://console.cloud.google.com/apis/library'),
+              _step(theme, 3, 'Google Auth Platform → Data access: add the scopes calendar.events, gmail.send, spreadsheets, presentations, drive.file, youtube.readonly, youtube.upload and userinfo.email. Then Audience → "Publish app", so the login does not expire every 7 days.', 'https://console.cloud.google.com/auth/overview'),
+              _step(theme, 4, 'Clients: one "Desktop app" client (Windows/macOS), one "Web application" client (Android), one "Android" client with the package name and release SHA-1, and one "iOS" client with the bundle id.', 'https://console.cloud.google.com/auth/clients'),
+              _step(theme, 5, 'Click "Connect Google". A browser opens, you approve (choose "Advanced → Go to FrameWorkz" on the unverified-app notice), and the connection is saved securely on this device.', null),
             ],
           ),
         ]),

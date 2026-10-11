@@ -67,7 +67,7 @@ Mobile cannot use the Desktop OAuth client. In the same Google Cloud project:
 2. Put the client id in `ios/Runner/Info.plist` (`GIDClientID`) and the reversed id in `CFBundleURLSchemes` (both placeholders are marked `YOUR_IOS_CLIENT_ID`).
 3. Alternatively paste the iOS client id in Settings → Google account → "iOS client id"; the app passes it to the SDK at runtime.
 
-The scopes requested are the same as on desktop (Calendar events, Gmail send, Sheets read-only, Drive file).
+The scopes requested are the same on every platform: calendar.events, gmail.send, spreadsheets, presentations (Slides), drive.file, youtube.readonly, youtube.upload, userinfo.email. Register exactly these under Google Auth Platform → Data access. Built-in client ids live in `lib/core/google/google_defaults.dart`; values typed in Settings override them.
 
 ## Notifications
 
