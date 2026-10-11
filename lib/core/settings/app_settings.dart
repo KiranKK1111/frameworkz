@@ -73,6 +73,7 @@ class AppSettingsState {
   String get googleClientSecret => _s(Keys.googleClientSecret, '');
   String get googleEmail => _s(Keys.googleEmail, '');
   String get googleMobileClientId => _s(Keys.googleMobileClientId, '');
+  String get googleServerClientId => _s(Keys.googleServerClientId, '');
   bool get googleConfigured => googleClientId.isNotEmpty;
   String get calendarId => _s(Keys.calendarId, 'primary');
   bool get calendarSync => _b(Keys.calendarSync, true);
@@ -122,6 +123,7 @@ class Keys {
   static const googleClientSecret = 'google.clientSecret';
   static const googleEmail = 'google.connectedEmail';
   static const googleMobileClientId = 'google.mobileClientId';
+  static const googleServerClientId = 'google.serverClientId';
   static const calendarId = 'google.calendarId';
   static const calendarSync = 'google.calendarSync';
   static const calendarInviteContacts = 'google.calendarInviteContacts';

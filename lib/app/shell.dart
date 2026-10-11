@@ -234,74 +234,84 @@ class _MobileShell extends ConsumerWidget {
             duration: 300.ms,
             curve: Curves.easeOutBack,
           ),
-      bottomNavigationBar: NavigationBar(
-        height: 66,
-        selectedIndex: index,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        backgroundColor: theme.colorScheme.surface,
-        indicatorColor: BzColors.primary.withValues(alpha: 0.14),
-        onDestinationSelected: (i) {
-          if (i < _tabs.length) {
-            context.go(_tabs[i]);
-          } else {
-            _openMoreSheet(context);
-          }
-        },
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(BootstrapIcons.house_door, size: 20),
-            selectedIcon: Icon(
-              BootstrapIcons.house_door,
-              size: 20,
-              color: BzColors.primary,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStatePropertyAll(
+            theme.textTheme.labelSmall?.copyWith(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
             ),
-            label: 'Home',
           ),
-          const NavigationDestination(
-            icon: Icon(BootstrapIcons.funnel, size: 20),
-            selectedIcon: Icon(
-              BootstrapIcons.funnel_fill,
-              size: 20,
-              color: BzColors.primary,
+        ),
+        child: NavigationBar(
+          height: 66,
+          selectedIndex: index,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          backgroundColor: theme.colorScheme.surface,
+          indicatorColor: BzColors.primary.withValues(alpha: 0.14),
+          onDestinationSelected: (i) {
+            if (i < _tabs.length) {
+              context.go(_tabs[i]);
+            } else {
+              _openMoreSheet(context);
+            }
+          },
+          destinations: [
+            const NavigationDestination(
+              icon: Icon(BootstrapIcons.house_door, size: 20),
+              selectedIcon: Icon(
+                BootstrapIcons.house_door,
+                size: 20,
+                color: BzColors.primary,
+              ),
+              label: 'Home',
             ),
-            label: 'Leads',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: counts.attention > 0,
-              label: Text('${counts.attention}'),
-              backgroundColor: counts.overdue > 0
-                  ? BzColors.danger
-                  : BzColors.warning,
-              textColor: counts.overdue > 0 ? Colors.white : BzColors.gray900,
-              child: const Icon(BootstrapIcons.bell, size: 20),
+            const NavigationDestination(
+              icon: Icon(BootstrapIcons.funnel, size: 20),
+              selectedIcon: Icon(
+                BootstrapIcons.funnel_fill,
+                size: 20,
+                color: BzColors.primary,
+              ),
+              label: 'Leads',
             ),
-            selectedIcon: const Icon(
-              BootstrapIcons.bell_fill,
-              size: 20,
-              color: BzColors.primary,
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: counts.attention > 0,
+                label: Text('${counts.attention}'),
+                backgroundColor: counts.overdue > 0
+                    ? BzColors.danger
+                    : BzColors.warning,
+                textColor: counts.overdue > 0 ? Colors.white : BzColors.gray900,
+                child: const Icon(BootstrapIcons.bell, size: 20),
+              ),
+              selectedIcon: const Icon(
+                BootstrapIcons.bell_fill,
+                size: 20,
+                color: BzColors.primary,
+              ),
+              label: 'Follow‑ups',
             ),
-            label: 'Follow-ups',
-          ),
-          const NavigationDestination(
-            icon: Icon(BootstrapIcons.calendar3, size: 20),
-            selectedIcon: Icon(
-              BootstrapIcons.calendar_week,
-              size: 20,
-              color: BzColors.primary,
+            const NavigationDestination(
+              icon: Icon(BootstrapIcons.calendar3, size: 20),
+              selectedIcon: Icon(
+                BootstrapIcons.calendar_week,
+                size: 20,
+                color: BzColors.primary,
+              ),
+              label: 'Calendar',
             ),
-            label: 'Calendar',
-          ),
-          const NavigationDestination(
-            icon: Icon(BootstrapIcons.grid, size: 20),
-            selectedIcon: Icon(
-              BootstrapIcons.grid_fill,
-              size: 20,
-              color: BzColors.primary,
+            const NavigationDestination(
+              icon: Icon(BootstrapIcons.grid, size: 20),
+              selectedIcon: Icon(
+                BootstrapIcons.grid_fill,
+                size: 20,
+                color: BzColors.primary,
+              ),
+              label: 'More',
             ),
-            label: 'More',
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

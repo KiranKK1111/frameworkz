@@ -53,7 +53,8 @@ Mobile cannot use the Desktop OAuth client. In the same Google Cloud project:
 ### Android
 1. Get the signing fingerprint: `cd android && ./gradlew signingReport` (debug) or from your release keystore.
 2. Credentials → Create OAuth client ID → **Android**, package `com.frameworkz.frameworkz`, paste the SHA-1.
-3. Nothing to paste into the app; Google resolves the client from the fingerprint.
+3. Credentials → Create OAuth client ID → **Web application** (no redirect URIs needed). Copy its client id and paste it in
+   Settings → Google account → "Web client ID" inside the app. Google Sign-In on Android requires this `serverClientId`.
 
 ### iOS
 1. Credentials → Create OAuth client ID → **iOS**, bundle id `com.frameworkz.frameworkz`.

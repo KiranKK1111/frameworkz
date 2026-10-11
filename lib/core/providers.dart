@@ -103,6 +103,7 @@ final googleAuthProvider = Provider<GoogleAuthService>((ref) {
     readClientId: () => ref.read(settingsStoreProvider).current.googleClientId,
     readClientSecret: () => ref.read(settingsStoreProvider).current.googleClientSecret,
     readMobileClientId: () => ref.read(settingsStoreProvider).current.googleMobileClientId,
+    readServerClientId: () => ref.read(settingsStoreProvider).current.googleServerClientId,
     onEmailResolved: (email) => db.setSetting(Keys.googleEmail, email),
   );
   ref.onDispose(svc.dispose);

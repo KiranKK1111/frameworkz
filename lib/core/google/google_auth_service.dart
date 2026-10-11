@@ -44,6 +44,7 @@ class GoogleAuthService {
     required this.readClientId,
     required this.readClientSecret,
     required this.readMobileClientId,
+    required this.readServerClientId,
     required this.onEmailResolved,
   });
 
@@ -52,6 +53,10 @@ class GoogleAuthService {
 
   /// iOS client id (Android resolves its client from the SHA-1 fingerprint).
   final String Function() readMobileClientId;
+
+  /// "Web application" client id from the same Google Cloud project; Android
+  /// requires it as serverClientId.
+  final String Function() readServerClientId;
   final Future<void> Function(String email) onEmailResolved;
 
   static const _credsKey = 'google.credentials';
@@ -76,8 +81,10 @@ class GoogleAuthService {
 
   bool get isConnected => state.value.connected && _client != null;
 
-  /// Whether sign-in can be attempted (desktop needs a client id first).
-  bool get isConfigured => AppPlatform.usesGoogleSignIn || readClientId().isNotEmpty;
+  /// Whether sign-in can be attempted.
+  bool get isConfigured => AppPlatform.isAndroid
+      ? readServerClientId().isNotEmpty
+      : (AppPlatform.isIOS ? true : readClientId().isNotEmpty);
 
   // ------------------------------------------------------------------ restore
   Future<void> restore({String? knownEmail}) async {
@@ -106,11 +113,19 @@ class GoogleAuthService {
   Future<void> _initMobile() async {
     if (_mobileInitialized) return;
     final iosClient = readMobileClientId();
-    await GoogleSignIn.instance.initialize(clientId: AppPlatform.isIOS && iosClient.isNotEmpty ? iosClient : null);
+    final serverClient = readServerClientId();
+    if (AppPlatform.isAndroid && serverClient.isEmpty) {
+      throw StateError('Add the Web client ID (serverClientId) in Settings → Google account first.');
+    }
+    await GoogleSignIn.instance.initialize(
+      clientId: AppPlatform.isIOS && iosClient.isNotEmpty ? iosClient : null,
+      serverClientId: serverClient.isNotEmpty ? serverClient : null,
+    );
     _mobileInitialized = true;
   }
 
   Future<void> _restoreMobile(String? knownEmail) async {
+    if (!isConfigured) return;
     try {
       await _initMobile();
       final account = await GoogleSignIn.instance.attemptLightweightAuthentication();

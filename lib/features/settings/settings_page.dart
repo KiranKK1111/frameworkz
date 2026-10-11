@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/responsive.dart';
 import '../../app/theme/bz_colors.dart';
+import '../../core/platform.dart';
 import '../../core/providers.dart';
 import '../../core/utils/format.dart';
 import '../../ui/widgets/bz_alert.dart';
@@ -411,10 +412,16 @@ class _GoogleSectionState extends ConsumerState<_GoogleSection> {
             ]),
           ),
           const SizedBox(height: 16),
-          const BzRow([
-            _SettingText(settingKey: Keys.googleClientId, label: 'OAuth Client ID', hint: '1234567890-abc.apps.googleusercontent.com', icon: BootstrapIcons.key),
-            _SettingText(settingKey: Keys.googleClientSecret, label: 'OAuth Client Secret', hint: 'GOCSPX-…', icon: BootstrapIcons.shield_lock, obscure: true),
-          ]),
+          if (AppPlatform.isDesktop)
+            const BzRow([
+              _SettingText(settingKey: Keys.googleClientId, label: 'OAuth Client ID (Desktop app)', hint: '1234567890-abc.apps.googleusercontent.com', icon: BootstrapIcons.key),
+              _SettingText(settingKey: Keys.googleClientSecret, label: 'OAuth Client Secret', hint: 'GOCSPX-…', icon: BootstrapIcons.shield_lock, obscure: true),
+            ])
+          else
+            const BzRow([
+              _SettingText(settingKey: Keys.googleServerClientId, label: 'Web client ID (required on Android)', hint: '1234567890-web.apps.googleusercontent.com', icon: BootstrapIcons.key, help: 'Create a "Web application" OAuth client and an "Android" client with your SHA-1 in the same project.'),
+              _SettingText(settingKey: Keys.googleMobileClientId, label: 'iOS client ID', hint: '1234567890-ios.apps.googleusercontent.com', icon: BootstrapIcons.apple),
+            ]),
           const SizedBox(height: 12),
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
@@ -529,11 +536,9 @@ class _SheetsSectionState extends ConsumerState<_SheetsSection> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           const _SettingText(settingKey: Keys.sheetsSpreadsheetId, label: 'Spreadsheet link or ID', hint: 'https://docs.google.com/spreadsheets/d/…', icon: BootstrapIcons.link_45deg),
           const SizedBox(height: 14),
-          Row(children: [
+          Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
             BzButton(label: 'Import everything', icon: BootstrapIcons.cloud_download, loading: _importing, onPressed: _importing ? null : () => _import(formOnly: false)),
-            const SizedBox(width: 8),
-            BzButton(label: 'Import new form responses only', icon: BootstrapIcons.inbox, variant: BzVariant.light, onPressed: _importing ? null : () => _import(formOnly: true)),
-            const Spacer(),
+            BzButton(label: 'New form responses only', icon: BootstrapIcons.inbox, variant: BzVariant.light, onPressed: _importing ? null : () => _import(formOnly: true)),
             if (s.sheetsLastImportAt != null) Text('Last import ${Fmt.timeAgo(s.sheetsLastImportAt!)}', style: theme.textTheme.bodySmall),
           ]),
           if (!g.connected) ...[const SizedBox(height: 12), const BzAlert(variant: BzVariant.warning, message: 'Connect your Google account first (Google account section).', dense: true)],

@@ -28,6 +28,9 @@ Future<T?> showBzModal<T>({
   if (context.isPhone) {
     return showModalBottomSheet<T>(
       context: context,
+      // Root navigator: the sheet must cover the shell's app bar, bottom
+      // navigation and floating button, not just the page area.
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       isDismissible: dismissible,
@@ -64,15 +67,25 @@ Future<T?> showBzModal<T>({
       child: child,
     ),
     transitionBuilder: (ctx, anim, _, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic, reverseCurve: Curves.easeIn);
+      final curved = CurvedAnimation(
+        parent: anim,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeIn,
+      );
       return BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 6 * anim.value, sigmaY: 6 * anim.value),
+        filter: ImageFilter.blur(
+          sigmaX: 6 * anim.value,
+          sigmaY: 6 * anim.value,
+        ),
         child: FadeTransition(
           opacity: curved,
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
             child: SlideTransition(
-              position: Tween<Offset>(begin: const Offset(0, 0.03), end: Offset.zero).animate(curved),
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.03),
+                end: Offset.zero,
+              ).animate(curved),
               child: child,
             ),
           ),
@@ -83,7 +96,13 @@ Future<T?> showBzModal<T>({
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, this.subtitle, this.icon, required this.variant, this.handle = false});
+  const _Header({
+    required this.title,
+    this.subtitle,
+    this.icon,
+    required this.variant,
+    this.handle = false,
+  });
   final String title;
   final String? subtitle;
   final IconData? icon;
@@ -98,19 +117,38 @@ class _Header extends StatelessWidget {
         if (handle)
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outline, borderRadius: BorderRadius.circular(2))),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
         Padding(
-          padding: EdgeInsets.fromLTRB(handle ? 20 : 24, handle ? 14 : 18, 14, 16),
+          padding: EdgeInsets.fromLTRB(
+            handle ? 20 : 24,
+            handle ? 14 : 18,
+            14,
+            16,
+          ),
           child: Row(
             children: [
               if (icon != null) ...[
                 Container(
                   width: 38,
                   height: 38,
-                  decoration: BoxDecoration(color: variant.subtle(theme.brightness), borderRadius: BorderRadius.circular(11)),
+                  decoration: BoxDecoration(
+                    color: variant.subtle(theme.brightness),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
                   alignment: Alignment.center,
-                  child: Icon(icon, size: 18, color: variant.emphasis(theme.brightness)),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: variant.emphasis(theme.brightness),
+                  ),
                 ),
                 const SizedBox(width: 14),
               ],
@@ -119,15 +157,30 @@ class _Header extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(title, style: theme.textTheme.titleLarge?.copyWith(fontSize: 18), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
-                      Text(subtitle!, style: theme.textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(
+                        subtitle!,
+                        style: theme.textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ],
                 ),
               ),
-              BzIconButton(icon: BootstrapIcons.x_lg, tooltip: 'Close', iconSize: 14, onPressed: () => Navigator.of(context).maybePop()),
+              BzIconButton(
+                icon: BootstrapIcons.x_lg,
+                tooltip: 'Close',
+                iconSize: 14,
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
             ],
           ),
         ),
@@ -150,14 +203,30 @@ class _Footer extends StatelessWidget {
       child: stacked && actions.length > 2
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: actions.reversed.expand((a) => [a, const SizedBox(height: 8)]).toList()..removeLast(),
+              children:
+                  actions.reversed
+                      .expand((a) => [a, const SizedBox(height: 8)])
+                      .toList()
+                    ..removeLast(),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: stacked
-                  ? actions.map((a) => Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: a))).toList()
-                  : actions.expand((a) => [a, const SizedBox(width: 8)]).toList()
-                ..removeLast(),
+              children:
+                  stacked
+                        ? actions
+                              .map(
+                                (a) => Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: a,
+                                  ),
+                                ),
+                              )
+                              .toList()
+                        : actions
+                              .expand((a) => [a, const SizedBox(width: 8)])
+                              .toList()
+                    ..removeLast(),
             ),
     );
   }
@@ -207,10 +276,23 @@ class _BzModalFrame extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Header(title: title, subtitle: subtitle, icon: icon, variant: variant),
+              _Header(
+                title: title,
+                subtitle: subtitle,
+                icon: icon,
+                variant: variant,
+              ),
               const Divider(),
-              Flexible(child: SingleChildScrollView(padding: bodyPadding, child: child)),
-              if (actions != null && actions!.isNotEmpty) ...[const Divider(), _Footer(actions: actions!)],
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: bodyPadding,
+                  child: child,
+                ),
+              ),
+              if (actions != null && actions!.isNotEmpty) ...[
+                const Divider(),
+                _Footer(actions: actions!),
+              ],
             ],
           ),
         ),
@@ -249,7 +331,9 @@ class _BzSheetFrame extends StatelessWidget {
       duration: const Duration(milliseconds: 150),
       padding: EdgeInsets.only(bottom: inset),
       child: Container(
-        constraints: BoxConstraints(maxHeight: size.height * (fullscreen ? 0.96 : 0.92)),
+        constraints: BoxConstraints(
+          maxHeight: size.height * (fullscreen ? 0.96 : 0.92),
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -260,15 +344,26 @@ class _BzSheetFrame extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(title: title, subtitle: subtitle, icon: icon, variant: variant, handle: true),
+            _Header(
+              title: title,
+              subtitle: subtitle,
+              icon: icon,
+              variant: variant,
+              handle: true,
+            ),
             const Divider(),
             Flexible(
               child: SingleChildScrollView(
-                padding: bodyPadding is EdgeInsets ? const EdgeInsets.fromLTRB(18, 16, 18, 20) : bodyPadding,
+                padding: bodyPadding is EdgeInsets
+                    ? const EdgeInsets.fromLTRB(18, 16, 18, 20)
+                    : bodyPadding,
                 child: child,
               ),
             ),
-            if (actions != null && actions!.isNotEmpty) ...[const Divider(), _Footer(actions: actions!, stacked: true)],
+            if (actions != null && actions!.isNotEmpty) ...[
+              const Divider(),
+              _Footer(actions: actions!, stacked: true),
+            ],
             SizedBox(height: MediaQuery.paddingOf(context).bottom > 0 ? 0 : 6),
           ],
         ),
@@ -293,10 +388,21 @@ Future<bool> showBzConfirm(
     icon: icon,
     variant: variant,
     width: 460,
-    child: Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+    child: Text(
+      message,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+    ),
     actions: [
-      BzButton(label: cancelLabel, variant: BzVariant.light, onPressed: () => Navigator.of(context).pop(false)),
-      BzButton(label: confirmLabel, variant: variant, onPressed: () => Navigator.of(context).pop(true)),
+      BzButton(
+        label: cancelLabel,
+        variant: BzVariant.light,
+        onPressed: () => Navigator.of(context).pop(false),
+      ),
+      BzButton(
+        label: confirmLabel,
+        variant: variant,
+        onPressed: () => Navigator.of(context).pop(true),
+      ),
     ],
   );
   return res ?? false;
@@ -311,12 +417,16 @@ Future<T?> showBzSideSheet<T>({
   if (context.isPhone) {
     return showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.sizeOf(ctx).height * 0.9,
-        decoration: BoxDecoration(color: Theme.of(ctx).colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         clipBehavior: Clip.antiAlias,
         child: child,
       ),
@@ -336,8 +446,18 @@ Future<T?> showBzSideSheet<T>({
       ),
     ),
     transitionBuilder: (ctx, anim, _, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic, reverseCurve: Curves.easeIn);
-      return SlideTransition(position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(curved), child: child);
+      final curved = CurvedAnimation(
+        parent: anim,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeIn,
+      );
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      );
     },
   );
 }
