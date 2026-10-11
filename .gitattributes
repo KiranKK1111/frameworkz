@@ -1,0 +1,7 @@
+# Keep Unix line endings for files executed on macOS/Linux runners
+*.sh text eol=lf
+*.plist text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xcconfig text eol=lf
+*.entitlements text eol=lf
