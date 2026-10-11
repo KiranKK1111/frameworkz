@@ -174,9 +174,13 @@ class InvoiceRow extends ConsumerWidget {
           ]),
           const SizedBox(height: 8),
           Row(children: [
-            InvoiceStatusBadge(invoice.status),
-            if (invoice.status.isOutstanding) ...[const SizedBox(width: 6), BzBadge(Fmt.relativeDay(invoice.dueDate), variant: dueVariant, icon: BootstrapIcons.calendar3)],
-            const Spacer(),
+            Expanded(
+              child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                InvoiceStatusBadge(invoice.status),
+                if (invoice.status.isOutstanding) BzBadge(Fmt.relativeDay(invoice.dueDate), variant: dueVariant, icon: BootstrapIcons.calendar3),
+              ]),
+            ),
+            const SizedBox(width: 6),
             if (invoice.status.isOutstanding || invoice.status == InvoiceStatus.draft) BzIconButton(icon: BootstrapIcons.cash_coin, tooltip: 'Record payment', variant: BzVariant.success, onPressed: () => showRecordPaymentDialog(context, invoice)),
             if (client != null && client.email.isNotEmpty)
               PopupMenuButton<String>(

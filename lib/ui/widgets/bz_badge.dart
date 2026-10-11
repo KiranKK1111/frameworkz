@@ -48,7 +48,7 @@ class BzBadge extends StatelessWidget {
             Icon(icon, size: fontSize + 1, color: fg),
             const SizedBox(width: 5),
           ],
-          Text(text, style: TextStyle(color: fg, fontSize: fontSize, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: 0.1)),
+          Flexible(child: Text(text, style: TextStyle(color: fg, fontSize: fontSize, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: 0.1), maxLines: 1, overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

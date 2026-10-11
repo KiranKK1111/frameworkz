@@ -167,7 +167,7 @@ class ProjectRow extends ConsumerWidget {
       builder: (context, controller, _) => InkWell(
         borderRadius: BorderRadius.circular(999),
         onTap: () => controller.isOpen ? controller.close() : controller.open(),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [ProjectStatusBadge(project.status), const SizedBox(width: 3), Icon(BootstrapIcons.chevron_down, size: 10, color: theme.colorScheme.onSurfaceVariant)]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: ProjectStatusBadge(project.status)), const SizedBox(width: 3), Icon(BootstrapIcons.chevron_down, size: 10, color: theme.colorScheme.onSurfaceVariant)]),
       ),
       menuChildren: [
         for (final s in ProjectStatus.values) MenuItemButton(onPressed: s == project.status ? null : () => _setStatus(context, ref, s), child: SizedBox(width: 150, child: Text(s.label))),
@@ -191,10 +191,8 @@ class ProjectRow extends ConsumerWidget {
           ]),
           const SizedBox(height: 8),
           Row(children: [
-            statusMenu,
+            Expanded(child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [statusMenu, PaymentStatusBadge(project.paymentStatus)])),
             const SizedBox(width: 6),
-            PaymentStatusBadge(project.paymentStatus),
-            const Spacer(),
             BzIconButton(icon: BootstrapIcons.receipt, tooltip: 'Create invoice', onPressed: () => showInvoiceFormDialog(context, ref, client: client, project: project)),
             BzIconButton(icon: BootstrapIcons.pencil, tooltip: 'Edit', onPressed: () => showProjectFormDialog(context, ref, existing: project)),
           ]),

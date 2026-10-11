@@ -232,16 +232,17 @@ class _MonthGrid extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(children: [
                 Text(Fmt.monthYear(month), style: theme.textTheme.titleMedium),
-                const Spacer(),
-                for (final k in _Kind.values)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Row(children: [
-                      Container(width: 8, height: 8, decoration: BoxDecoration(color: _kindColor(k), shape: BoxShape.circle)),
-                      const SizedBox(width: 5),
-                      Text(_kindLabel(k), style: theme.textTheme.labelSmall),
-                    ]),
-                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Wrap(alignment: WrapAlignment.end, spacing: 12, runSpacing: 4, children: [
+                    for (final k in _Kind.values)
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: _kindColor(k), shape: BoxShape.circle)),
+                        const SizedBox(width: 5),
+                        Text(_kindLabel(k), style: theme.textTheme.labelSmall),
+                      ]),
+                  ]),
+                ),
               ]),
             ),
             const Divider(),

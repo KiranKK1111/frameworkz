@@ -132,14 +132,10 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
           const SizedBox(height: 14),
           BzField(label: 'Notes', child: BzTextField(controller: _notes, minLines: 2, maxLines: 4)),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
-              const SizedBox(width: 8),
-              BzButton(label: widget.existing == null ? 'Create client' : 'Save changes', icon: BootstrapIcons.check2, loading: _saving, onPressed: _saving ? null : _save),
-            ],
-          ),
+          BzActionRow([
+            BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
+            BzButton(label: widget.existing == null ? 'Create client' : 'Save changes', icon: BootstrapIcons.check2, loading: _saving, onPressed: _saving ? null : _save),
+          ]),
         ],
       ),
     );

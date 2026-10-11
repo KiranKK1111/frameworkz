@@ -76,7 +76,8 @@ class BzResponsiveGrid extends StatelessWidget {
               ],
             ],
           );
-          row = itemHeight != null ? SizedBox(height: itemHeight, child: row) : IntrinsicHeight(child: row);
+          final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
+          row = itemHeight != null ? SizedBox(height: itemHeight! * (scale > 1 ? scale : 1), child: row) : IntrinsicHeight(child: row);
           rows.add(row);
           if (i + cols < children.length) rows.add(SizedBox(height: gap));
         }

@@ -166,14 +166,10 @@ class _FollowUpFormState extends ConsumerState<_FollowUpForm> {
           ),
         ]),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
-            const SizedBox(width: 8),
-            BzButton(label: _hasTime ? 'Schedule meeting' : 'Schedule', icon: BootstrapIcons.calendar_plus, loading: _saving, onPressed: _saving ? null : _save),
-          ],
-        ),
+        BzActionRow([
+          BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
+          BzButton(label: _hasTime ? 'Schedule meeting' : 'Schedule', icon: BootstrapIcons.calendar_plus, loading: _saving, onPressed: _saving ? null : _save),
+        ]),
       ],
     );
   }

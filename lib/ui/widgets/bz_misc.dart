@@ -52,13 +52,17 @@ class BzPageHeader extends StatelessWidget {
         if (actions != null && !phone) ...actions!.expand((a) => [const SizedBox(width: 8), a]),
       ],
     );
+    final pairable = actions != null && actions!.length <= 2 && actions!.every((a) => a is BzButton);
     final content = phone && actions != null && actions!.isNotEmpty
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               titleBlock,
               const SizedBox(height: 12),
-              BzHScroll(children: actions!),
+              if (pairable)
+                Row(children: [for (var i = 0; i < actions!.length; i++) ...[if (i > 0) const SizedBox(width: 8), Expanded(child: actions![i])]])
+              else
+                BzHScroll(children: actions!),
             ],
           )
         : titleBlock;
@@ -66,6 +70,40 @@ class BzPageHeader extends StatelessWidget {
       padding: EdgeInsets.only(bottom: phone ? 14 : 20),
       child: content,
     ).animate().fadeIn(duration: 250.ms).slideY(begin: -0.08, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+  }
+}
+
+/// One entry of a [BzMoreMenu].
+class BzMenuEntry {
+  const BzMenuEntry(this.label, this.icon, this.onTap, {this.danger = false});
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool danger;
+}
+
+/// "More" button opening a styled menu — replaces bare PopupMenuButtons in
+/// page headers so the trigger lines up with the other buttons.
+class BzMoreMenu extends StatelessWidget {
+  const BzMoreMenu({super.key, required this.entries, this.label = 'More'});
+  final List<BzMenuEntry> entries;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MenuAnchor(
+      alignmentOffset: const Offset(0, 6),
+      builder: (context, controller, _) => BzButton(label: label, icon: BootstrapIcons.three_dots, variant: BzVariant.light, onPressed: () => controller.isOpen ? controller.close() : controller.open()),
+      menuChildren: [
+        for (final e in entries)
+          MenuItemButton(
+            onPressed: e.onTap,
+            leadingIcon: Icon(e.icon, size: 14, color: e.danger ? BzColors.danger : theme.colorScheme.onSurfaceVariant),
+            child: SizedBox(width: 180, child: Text(e.label, style: TextStyle(color: e.danger ? BzColors.danger : null))),
+          ),
+      ],
+    );
   }
 }
 
@@ -175,7 +213,7 @@ class BzMetaChip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: c),
           const SizedBox(width: 6),
-          Text(text, style: theme.textTheme.labelSmall?.copyWith(color: onTap != null ? BzColors.primary : theme.colorScheme.onSurface, fontWeight: FontWeight.w600)),
+          Flexible(child: Text(text, style: theme.textTheme.labelSmall?.copyWith(color: onTap != null ? BzColors.primary : theme.colorScheme.onSurface, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

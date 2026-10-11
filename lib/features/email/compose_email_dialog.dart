@@ -210,12 +210,15 @@ class _ComposeBodyState extends ConsumerState<_ComposeBody> {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: Row(
             children: [
-              Text('Message', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-              const Spacer(),
-              BzSegmented<bool>(
-                value: _preview,
-                options: const [(false, 'Edit', BootstrapIcons.pencil), (true, 'Preview', BootstrapIcons.eye)],
-                onChanged: (v) => setState(() => _preview = v),
+              Expanded(child: Text('Message', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600))),
+              const SizedBox(width: 8),
+              Flexible(
+                flex: 3,
+                child: BzSegmented<bool>(
+                  value: _preview,
+                  options: const [(false, 'Edit', BootstrapIcons.pencil), (true, 'Preview', BootstrapIcons.eye)],
+                  onChanged: (v) => setState(() => _preview = v),
+                ),
               ),
             ],
           ),
@@ -260,11 +263,7 @@ class _ComposeBodyState extends ConsumerState<_ComposeBody> {
                     Expanded(child: Text('Sending as ${google.email ?? 'Gmail'}', style: theme.textTheme.labelSmall, overflow: TextOverflow.ellipsis)),
                   ]),
                 ),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
+              BzActionRow([
                   BzButton(
                     label: 'Copy',
                     icon: BootstrapIcons.copy,
@@ -277,8 +276,7 @@ class _ComposeBodyState extends ConsumerState<_ComposeBody> {
                   BzButton(label: 'Mail app', icon: BootstrapIcons.box_arrow_up_right, variant: BzVariant.light, onPressed: _openInMailApp),
                   BzButton(label: 'Skip', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop(false)),
                   BzButton(label: _sending ? 'Sending…' : 'Send email', icon: BootstrapIcons.send_fill, loading: _sending, onPressed: google.connected && !_sending ? _send : null),
-                ],
-              ),
+              ]),
             ],
           ),
         ),

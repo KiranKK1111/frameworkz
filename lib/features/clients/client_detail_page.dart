@@ -56,26 +56,17 @@ class ClientDetailPage extends ConsumerWidget {
       BzButton(label: 'Invoice', icon: BootstrapIcons.receipt, variant: BzVariant.light, onPressed: () => showInvoiceFormDialog(context, ref, client: client)),
       BzButton(label: 'Follow-up', icon: BootstrapIcons.bell, variant: BzVariant.light, onPressed: () => showFollowUpFormDialog(context, ref, client: client)),
       BzButton(label: 'Email', icon: BootstrapIcons.envelope, variant: BzVariant.light, onPressed: client.email.isEmpty ? null : compose),
-      PopupMenuButton<String>(
-        tooltip: 'More',
-        icon: const Icon(BootstrapIcons.three_dots, size: 16),
-        onSelected: (v) async {
-          if (v == 'edit') showClientFormDialog(context, ref, existing: client);
-          if (v == 'delete') {
-            final ok = await showBzConfirm(context, title: 'Delete client?', message: 'Projects and invoices stay but lose their client link.', confirmLabel: 'Delete');
-            if (ok) {
-              await ref.read(clientsRepoProvider).delete(client.id);
-              BzToasts.info('Client deleted');
-              if (context.mounted) context.go(Routes.clients);
-            }
+      BzMoreMenu(entries: [
+        BzMenuEntry('Edit details', BootstrapIcons.pencil, () => showClientFormDialog(context, ref, existing: client)),
+        BzMenuEntry('Delete client', BootstrapIcons.trash3, () async {
+          final ok = await showBzConfirm(context, title: 'Delete client?', message: 'Projects and invoices stay but lose their client link.', confirmLabel: 'Delete');
+          if (ok) {
+            await ref.read(clientsRepoProvider).delete(client.id);
+            BzToasts.info('Client deleted');
+            if (context.mounted) context.go(Routes.clients);
           }
-        },
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'edit', child: ListTile(dense: true, leading: Icon(BootstrapIcons.pencil, size: 15), title: Text('Edit details'))),
-          PopupMenuDivider(),
-          PopupMenuItem(value: 'delete', child: ListTile(dense: true, leading: Icon(BootstrapIcons.trash3, size: 15, color: BzColors.danger), title: Text('Delete client', style: TextStyle(color: BzColors.danger)))),
-        ],
-      ),
+        }, danger: true),
+      ]),
     ];
 
     return BzPage(
@@ -120,7 +111,7 @@ class ClientDetailPage extends ConsumerWidget {
               ],
             ],
           ).animate().fadeIn(duration: 250.ms),
-          if (context.isCompact) ...[const SizedBox(height: 14), BzHScroll(children: headerActions)],
+          if (context.isCompact) ...[const SizedBox(height: 14), BzResponsiveGrid(minItemWidth: 104, maxColumns: 3, gap: 8, children: headerActions)],
           const SizedBox(height: 20),
           BzResponsiveGrid(minItemWidth: 150, maxColumns: 4, gap: phone ? 10 : 14, itemHeight: phone ? 96 : 116, children: [
             BzStatTile(label: 'Monthly value', value: Fmt.money(client.monthlyValue), numericValue: client.monthlyValue, formatter: Fmt.money, icon: BootstrapIcons.arrow_repeat, variant: BzVariant.primary),
@@ -167,10 +158,20 @@ class ClientDetailPage extends ConsumerWidget {
                                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     Text(f.title, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                                     Text(f.hasTime ? Fmt.dateTime(f.dueAt) : Fmt.weekday(f.dueAt), style: theme.textTheme.bodySmall),
+                                    if (phone) ...[
+                                      const SizedBox(height: 6),
+                                      Row(children: [
+                                        Expanded(child: Align(alignment: Alignment.centerLeft, child: f.status == FollowUpStatus.pending ? DueBadge(f.dueAt, hasTime: f.hasTime) : FollowUpStatusBadge(f.status))),
+                                        FollowUpQuickActions(fu: f, compact: true, onEmail: client.email.isEmpty ? null : compose),
+                                      ]),
+                                    ],
                                   ])),
-                                  if (f.status == FollowUpStatus.pending) DueBadge(f.dueAt, hasTime: f.hasTime) else FollowUpStatusBadge(f.status),
-                                  const SizedBox(width: 6),
-                                  FollowUpQuickActions(fu: f, compact: true, onEmail: client.email.isEmpty ? null : compose),
+                                  if (!phone) ...[
+                                    const SizedBox(width: 8),
+                                    if (f.status == FollowUpStatus.pending) DueBadge(f.dueAt, hasTime: f.hasTime) else FollowUpStatusBadge(f.status),
+                                    const SizedBox(width: 6),
+                                    FollowUpQuickActions(fu: f, compact: true, onEmail: client.email.isEmpty ? null : compose),
+                                  ],
                                 ]),
                               ),
                           ]),

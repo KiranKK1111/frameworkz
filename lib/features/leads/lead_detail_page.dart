@@ -54,35 +54,22 @@ class LeadDetailPage extends ConsumerWidget {
       BzButton(label: 'Follow-up', icon: BootstrapIcons.bell, variant: BzVariant.light, onPressed: () => showFollowUpFormDialog(context, ref, lead: lead)),
       BzButton(label: 'Meeting', icon: BootstrapIcons.camera_video, variant: BzVariant.light, onPressed: () => showFollowUpFormDialog(context, ref, lead: lead, meeting: true)),
       BzButton(label: 'Email', icon: BootstrapIcons.envelope, variant: BzVariant.light, onPressed: lead.email.isEmpty ? null : () => _compose(context, ref, lead, null)),
-      PopupMenuButton<String>(
-        tooltip: 'More',
-        icon: const Icon(BootstrapIcons.three_dots, size: 16),
-        onSelected: (v) async {
-          switch (v) {
-            case 'edit':
-              showLeadFormDialog(context, ref, existing: lead);
-            case 'convert':
-              showConvertToClientDialog(context, lead);
-            case 'copy':
-              Clipboard.setData(ClipboardData(text: [lead.business, lead.contactPerson, lead.phone, lead.email, lead.instagram].where((s) => s.isNotEmpty).join('\n')));
-              BzToasts.info('Contact details copied');
-            case 'delete':
-              final ok = await showBzConfirm(context, title: 'Delete lead?', message: 'This permanently removes ${lead.business}, its follow-ups and history.', confirmLabel: 'Delete');
-              if (ok) {
-                await ref.read(leadsRepoProvider).delete(lead.id);
-                BzToasts.info('Lead deleted');
-                if (context.mounted) context.go(Routes.leads);
-              }
+      BzMoreMenu(entries: [
+        BzMenuEntry('Edit details', BootstrapIcons.pencil, () => showLeadFormDialog(context, ref, existing: lead)),
+        if (lead.clientId == null) BzMenuEntry('Convert to client', BootstrapIcons.person_check, () => showConvertToClientDialog(context, lead)),
+        BzMenuEntry('Copy contact details', BootstrapIcons.copy, () {
+          Clipboard.setData(ClipboardData(text: [lead.business, lead.contactPerson, lead.phone, lead.email, lead.instagram].where((s) => s.isNotEmpty).join('\n')));
+          BzToasts.info('Contact details copied');
+        }),
+        BzMenuEntry('Delete lead', BootstrapIcons.trash3, () async {
+          final ok = await showBzConfirm(context, title: 'Delete lead?', message: 'This permanently removes ${lead.business}, its follow-ups and history.', confirmLabel: 'Delete');
+          if (ok) {
+            await ref.read(leadsRepoProvider).delete(lead.id);
+            BzToasts.info('Lead deleted');
+            if (context.mounted) context.go(Routes.leads);
           }
-        },
-        itemBuilder: (_) => [
-          const PopupMenuItem(value: 'edit', child: ListTile(dense: true, leading: Icon(BootstrapIcons.pencil, size: 15), title: Text('Edit details'))),
-          if (lead.clientId == null) const PopupMenuItem(value: 'convert', child: ListTile(dense: true, leading: Icon(BootstrapIcons.person_check, size: 15), title: Text('Convert to client'))),
-          const PopupMenuItem(value: 'copy', child: ListTile(dense: true, leading: Icon(BootstrapIcons.copy, size: 15), title: Text('Copy contact details'))),
-          const PopupMenuDivider(),
-          const PopupMenuItem(value: 'delete', child: ListTile(dense: true, leading: Icon(BootstrapIcons.trash3, size: 15, color: BzColors.danger), title: Text('Delete lead', style: TextStyle(color: BzColors.danger)))),
-        ],
-      ),
+        }, danger: true),
+      ]),
     ];
 
     return BzPage(
@@ -133,7 +120,7 @@ class LeadDetailPage extends ConsumerWidget {
           ).animate().fadeIn(duration: 250.ms),
           if (context.isCompact) ...[
             const SizedBox(height: 14),
-            BzHScroll(children: headerActions),
+            BzResponsiveGrid(minItemWidth: 104, maxColumns: 3, gap: 8, children: headerActions),
           ],
           const SizedBox(height: 20),
           if (lead.status.isOpen && lead.nextFollowUp != null && DateUtilsX.isPastDay(lead.nextFollowUp!))
@@ -146,12 +133,8 @@ class LeadDetailPage extends ConsumerWidget {
                 action: pending.isNotEmpty ? BzButton(label: 'Mark done', size: BzSize.sm, variant: BzVariant.danger, onPressed: () => completeFollowUpFlow(context, pending.first)) : null,
               ),
             ),
-          // Pipeline stepper (scrolls horizontally when narrow)
-          LayoutBuilder(builder: (context, c) {
-            final stepper = _PipelineStepper(lead: lead);
-            if (c.maxWidth >= 820) return stepper;
-            return SingleChildScrollView(scrollDirection: Axis.horizontal, child: SizedBox(width: 820, child: stepper));
-          }),
+          // Pipeline stepper (its steps scroll horizontally when narrow)
+          _PipelineStepper(lead: lead),
           const SizedBox(height: 20),
           BzTwoColumn(
             ratio: 3,
@@ -284,7 +267,7 @@ class _StatusButton extends StatelessWidget {
     return MenuAnchor(
       alignmentOffset: const Offset(0, 6),
       builder: (context, controller, _) => BzButton(
-        label: 'Change status',
+        label: context.isPhone ? 'Status' : 'Change status',
         icon: BootstrapIcons.arrow_repeat,
         trailingIcon: BootstrapIcons.chevron_down,
         onPressed: () => controller.isOpen ? controller.close() : controller.open(),
@@ -314,9 +297,8 @@ class _PipelineStepper extends StatelessWidget {
     final currentIdx = _steps.indexOf(lead.status);
     final isLost = lead.status == LeadStatus.lost;
     final isNurture = lead.status == LeadStatus.nurture;
-    return BzCard(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-      child: Row(
+    final phone = context.isPhone;
+    final row = Row(
         children: [
           for (var i = 0; i < _steps.length; i++) ...[
             Expanded(
@@ -357,7 +339,14 @@ class _PipelineStepper extends StatelessWidget {
             BzBadge(lead.status.label, variant: StatusStyle.lead(lead.status), soft: false, icon: StatusStyle.leadIcon(lead.status)),
           ],
         ],
-      ),
+      );
+    final minWidth = (isLost || isNurture) ? 880.0 : 760.0;
+    return BzCard(
+      padding: EdgeInsets.fromLTRB(phone ? 12 : 18, 16, phone ? 12 : 18, 14),
+      child: LayoutBuilder(builder: (context, c) {
+        if (c.maxWidth >= minWidth) return row;
+        return SingleChildScrollView(scrollDirection: Axis.horizontal, child: SizedBox(width: minWidth, child: row));
+      }),
     );
   }
 }
@@ -372,6 +361,8 @@ class _FollowUpTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final pending = fu.status == FollowUpStatus.pending;
     final v = pending ? DueBadge.variantFor(fu.dueAt) : StatusStyle.followUp(fu.status);
+    final compact = context.isPhone;
+    final Widget badge = pending ? DueBadge(fu.dueAt, hasTime: fu.hasTime) : FollowUpStatusBadge(fu.status);
     return BzHoverRow(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
@@ -389,22 +380,29 @@ class _FollowUpTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(fu.title, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, decoration: fu.status == FollowUpStatus.done ? TextDecoration.lineThrough : null)),
-                Row(children: [
+                Wrap(spacing: 8, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
                   Text(fu.hasTime ? Fmt.dateTime(fu.dueAt) : Fmt.weekday(fu.dueAt), style: theme.textTheme.bodySmall),
-                  if (fu.calendarEventId != null) ...[const SizedBox(width: 8), const Icon(BootstrapIcons.google, size: 10, color: BzColors.success), const SizedBox(width: 3), Text('Calendar', style: theme.textTheme.labelSmall?.copyWith(color: BzColors.success))],
-                  if (fu.meetLink.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    InkWell(onTap: () => launchUrl(Uri.parse(fu.meetLink)), child: Text('Meet link', style: theme.textTheme.labelSmall?.copyWith(color: BzColors.primary))),
-                  ],
-                  if (fu.outcome.isNotEmpty) ...[const SizedBox(width: 8), Expanded(child: Text('· ${fu.outcome}', style: theme.textTheme.bodySmall, overflow: TextOverflow.ellipsis))],
+                  if (fu.calendarEventId != null)
+                    Row(mainAxisSize: MainAxisSize.min, children: [const Icon(BootstrapIcons.google, size: 10, color: BzColors.success), const SizedBox(width: 3), Text('Calendar', style: theme.textTheme.labelSmall?.copyWith(color: BzColors.success))]),
+                  if (fu.meetLink.isNotEmpty) InkWell(onTap: () => launchUrl(Uri.parse(fu.meetLink)), child: Text('Meet link', style: theme.textTheme.labelSmall?.copyWith(color: BzColors.primary))),
+                  if (fu.outcome.isNotEmpty) Text('· ${fu.outcome}', style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ]),
+                if (compact) ...[
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: badge)),
+                    if (pending) FollowUpQuickActions(fu: fu, compact: true, onEmail: lead.email.isEmpty ? null : () => _compose(context, ref, lead, null)),
+                  ]),
+                ],
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (pending) DueBadge(fu.dueAt, hasTime: fu.hasTime) else FollowUpStatusBadge(fu.status),
-          const SizedBox(width: 6),
-          if (pending) FollowUpQuickActions(fu: fu, compact: true, onEmail: lead.email.isEmpty ? null : () => _compose(context, ref, lead, null)),
+          if (!compact) ...[
+            const SizedBox(width: 8),
+            badge,
+            const SizedBox(width: 6),
+            if (pending) FollowUpQuickActions(fu: fu, compact: true, onEmail: lead.email.isEmpty ? null : () => _compose(context, ref, lead, null)),
+          ],
         ],
       ),
     );

@@ -115,14 +115,10 @@ class _ConvertBodyState extends ConsumerState<_ConvertBody> {
           ]),
         ],
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            BzButton(label: 'Later', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
-            const SizedBox(width: 8),
-            BzButton(label: 'Create client', icon: BootstrapIcons.person_check, variant: BzVariant.success, loading: _saving, onPressed: _saving ? null : _save),
-          ],
-        ),
+        BzActionRow([
+          BzButton(label: 'Later', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
+          BzButton(label: 'Create client', icon: BootstrapIcons.person_check, variant: BzVariant.success, loading: _saving, onPressed: _saving ? null : _save),
+        ]),
       ],
     );
   }

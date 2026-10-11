@@ -276,7 +276,7 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.embedded) ...[
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: actions),
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: actions.map((a) => a is BzButton ? Flexible(child: a) : a).toList()),
           const SizedBox(height: 10),
         ],
         BzRow([
@@ -300,9 +300,9 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
         BzField(label: 'Subject', required: true, child: BzTextField(controller: _subject, prefixIcon: BootstrapIcons.type, hint: 'Proposal for {{business}} · {{service}}')),
         const SizedBox(height: 14),
         Row(children: [
-          Text('Body', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const Spacer(),
-          BzSegmented<bool>(value: _preview, options: [(false, 'Edit', BootstrapIcons.pencil), (true, context.isPhone ? 'Preview' : 'Preview with sample data', BootstrapIcons.eye)], onChanged: (v) => setState(() => _preview = v)),
+          Expanded(child: Text('Body', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600))),
+          const SizedBox(width: 8),
+          Flexible(flex: 4, child: BzSegmented<bool>(value: _preview, options: [(false, 'Edit', BootstrapIcons.pencil), (true, context.isPhone ? 'Preview' : 'Preview with sample data', BootstrapIcons.eye)], onChanged: (v) => setState(() => _preview = v))),
         ]),
         const SizedBox(height: 8),
         if (_preview)

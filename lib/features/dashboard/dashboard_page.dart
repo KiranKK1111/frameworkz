@@ -139,7 +139,9 @@ class _OnboardingCard extends ConsumerWidget {
           Row(children: [
             const Icon(BootstrapIcons.rocket_takeoff, size: 18, color: BzColors.primary),
             const SizedBox(width: 10),
-            Expanded(child: Text('Welcome to FrameWorkz — $done of ${steps.length} setup steps done', style: theme.textTheme.titleMedium)),
+            // The title wraps on narrow screens; the button stays on the same row.
+            Expanded(child: Text(context.isPhone ? 'Welcome — $done of ${steps.length} setup steps done' : 'Welcome to FrameWorkz — $done of ${steps.length} setup steps done', style: theme.textTheme.titleMedium)),
+            const SizedBox(width: 10),
             BzButton(label: done == steps.length ? 'Finish' : 'Dismiss', size: BzSize.sm, variant: BzVariant.light, onPressed: () => ref.setSetting(Keys.onboardingDone, 'true')),
           ]),
           const SizedBox(height: 14),
@@ -407,7 +409,10 @@ class _UpcomingCard extends ConsumerWidget {
                     Icon(it.$2, size: 13, color: it.$3),
                     const SizedBox(width: 8),
                     Expanded(child: Text(it.$4, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface), overflow: TextOverflow.ellipsis)),
-                    if (it.$5.isNotEmpty) Text(it.$5, style: theme.textTheme.labelSmall, overflow: TextOverflow.ellipsis),
+                    if (it.$5.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      ConstrainedBox(constraints: const BoxConstraints(maxWidth: 110), child: Text(it.$5, style: theme.textTheme.labelSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ],
                   ]),
                 ),
             ]),

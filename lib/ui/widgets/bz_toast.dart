@@ -116,8 +116,8 @@ class BzToastHost extends StatelessWidget {
       children: [
         child,
         Positioned(
-          right: 20,
-          bottom: 20,
+          right: MediaQuery.sizeOf(context).width < 700 ? 12 : 20,
+          bottom: MediaQuery.sizeOf(context).width < 700 ? 96 : 20,
           child: ValueListenableBuilder<List<BzToastItem>>(
             valueListenable: BzToasts.items,
             builder: (context, list, _) {
@@ -152,10 +152,11 @@ class _ToastCard extends StatelessWidget {
     final accent = item.variant.color;
     final bg = isDark ? BzColors.darkSurfaceAlt : Colors.white;
 
+    final maxW = MediaQuery.sizeOf(context).width - 24;
     Widget card = Material(
       color: Colors.transparent,
       child: Container(
-        width: 360,
+        width: maxW < 360 ? maxW : 360,
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(BzTheme.radiusLg),

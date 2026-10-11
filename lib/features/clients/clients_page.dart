@@ -141,9 +141,13 @@ class _ClientCard extends ConsumerWidget {
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            ClientStatusBadge(client.status),
-            if (due > 0) ...[const SizedBox(width: 6), BzBadge('${Fmt.moneyCompact(due)} due', variant: BzVariant.danger, icon: BootstrapIcons.receipt)],
-            const Spacer(),
+            Expanded(
+              child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                ClientStatusBadge(client.status),
+                if (due > 0) BzBadge('${Fmt.moneyCompact(due)} due', variant: BzVariant.danger, icon: BootstrapIcons.receipt),
+              ]),
+            ),
+            const SizedBox(width: 6),
             if (client.phone.isNotEmpty) BzIconButton(icon: BootstrapIcons.whatsapp, tooltip: 'WhatsApp', variant: BzVariant.success, onPressed: () => openWhatsApp(client.phone)),
             if (client.email.isNotEmpty) BzIconButton(icon: BootstrapIcons.envelope, tooltip: 'Email', onPressed: () => showComposeEmailDialog(context, to: client.email, vars: TemplateEngine.clientVars(client, ref.read(settingsSnapshotProvider)), entityType: EntityType.client, entityId: client.id, category: 'client')),
             Icon(BootstrapIcons.chevron_right, size: 13, color: theme.colorScheme.onSurfaceVariant),

@@ -258,13 +258,19 @@ class _RulesSection extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(children: [
-                SizedBox(width: context.isPhone ? 130 : 170, child: LeadStatusBadge(st, withIcon: true)),
-                if (!context.isPhone) Expanded(child: Text(_ruleHint(st), style: theme.textTheme.bodySmall)) else const Spacer(),
+                if (context.isPhone)
+                  Expanded(child: Align(alignment: Alignment.centerLeft, child: LeadStatusBadge(st, withIcon: true)))
+                else ...[
+                  SizedBox(width: 170, child: Align(alignment: Alignment.centerLeft, child: LeadStatusBadge(st, withIcon: true))),
+                  Expanded(child: Text(_ruleHint(st), style: theme.textTheme.bodySmall)),
+                ],
+                const SizedBox(width: 10),
                 SizedBox(
                   width: context.isPhone ? 150 : 190,
                   child: st == LeadStatus.callScheduled
                       ? Text('Meeting date & time', style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic))
                       : BzDropdown<int?>(
+                          title: 'Follow-up after',
                           value: rules[st],
                           items: const [null, 0, 1, 2, 3, 4, 5, 7, 10, 14, 21, 30, 45, 60, 90],
                           labelOf: (d) => d == null ? 'No follow-up' : (d == 0 ? 'Same day' : (d == 1 ? 'Next day' : 'In $d days')),
@@ -276,9 +282,10 @@ class _RulesSection extends ConsumerWidget {
           const Divider(height: 24),
           Row(children: [
             Expanded(child: Text('Reminder time for all-day follow-ups (also used for the Google Calendar block)', style: theme.textTheme.bodyMedium)),
+            const SizedBox(width: 10),
             SizedBox(
-              width: 190,
-              child: BzDropdown<int>(value: s.followUpHour, items: List.generate(14, (i) => i + 7), labelOf: (h) => Fmt.time(DateTime(2000, 1, 1, h)), onChanged: (h) => ref.setSetting(Keys.followUpHour, '${h ?? 10}')),
+              width: context.isPhone ? 140 : 190,
+              child: BzDropdown<int>(title: 'Reminder time', value: s.followUpHour, items: List.generate(14, (i) => i + 7), labelOf: (h) => Fmt.time(DateTime(2000, 1, 1, h)), onChanged: (h) => ref.setSetting(Keys.followUpHour, '${h ?? 10}')),
             ),
           ]),
           const SizedBox(height: 12),
@@ -323,7 +330,7 @@ class _RemindersSection extends ConsumerWidget {
             BzField(
               label: 'Meeting alert',
               help: 'How long before a meeting you get notified (also the Google Calendar popup).',
-              child: BzDropdown<int>(value: s.meetingLeadMinutes, items: const [5, 10, 15, 30, 60], labelOf: (m) => '$m minutes before', onChanged: (m) => ref.setSetting(Keys.meetingLeadMinutes, '${m ?? 15}')),
+              child: BzDropdown<int>(title: 'Meeting alert', value: s.meetingLeadMinutes, items: const [5, 10, 15, 30, 60], labelOf: (m) => '$m minutes before', onChanged: (m) => ref.setSetting(Keys.meetingLeadMinutes, '${m ?? 15}')),
             ),
           ]),
           const SizedBox(height: 10),
@@ -375,41 +382,46 @@ class _GoogleSectionState extends ConsumerState<_GoogleSection> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: (g.connected ? BzColors.success : BzColors.warning).withValues(alpha: 0.35)),
             ),
-            child: Row(children: [
-              Container(width: 40, height: 40, decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(10)), alignment: Alignment.center, child: const Icon(BootstrapIcons.google, size: 18, color: BzColors.primary)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(g.connected ? 'Connected${g.email != null ? ' as ${g.email}' : ''}' : (s.googleConfigured ? 'Not connected' : 'Set up required'), style: theme.textTheme.titleSmall),
-                  Text(g.connected ? 'Calendar · Gmail · Sheets · Drive access granted' : (s.googleConfigured ? 'Click Connect to sign in with your Google account' : 'Paste your OAuth client details below, then connect'), style: theme.textTheme.bodySmall),
-                  if (g.error != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(g.error!, style: theme.textTheme.bodySmall?.copyWith(color: BzColors.danger))),
-                ]),
-              ),
-              if (g.connected)
-                BzButton(
-                  label: 'Disconnect',
-                  icon: BootstrapIcons.box_arrow_right,
-                  variant: BzVariant.danger,
-                  outline: true,
-                  onPressed: () async {
-                    await auth.disconnect();
-                    await ref.setSetting(Keys.googleEmail, '');
-                    BzToasts.info('Google account disconnected');
-                  },
-                )
-              else
-                BzButton(
-                  label: g.busy ? 'Waiting for browser…' : 'Connect Google',
-                  icon: BootstrapIcons.google,
-                  loading: g.busy,
-                  onPressed: g.busy || !s.googleConfigured
-                      ? null
-                      : () async {
-                          final ok = await auth.connect();
-                          if (ok) BzToasts.success('Google connected', message: 'Calendar reminders and Gmail sending are now active.');
-                        },
+            child: Builder(builder: (context) {
+              final info = Row(children: [
+                Container(width: 40, height: 40, decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(10)), alignment: Alignment.center, child: const Icon(BootstrapIcons.google, size: 18, color: BzColors.primary)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(g.connected ? 'Connected${g.email != null ? ' as ${g.email}' : ''}' : (s.googleConfigured ? 'Not connected' : 'Set up required'), style: theme.textTheme.titleSmall),
+                    Text(g.connected ? 'Calendar · Gmail · Sheets · Drive access granted' : (s.googleConfigured ? 'Tap Connect to sign in with your Google account' : 'Paste your OAuth client details below, then connect'), style: theme.textTheme.bodySmall),
+                    if (g.error != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(g.error!, style: theme.textTheme.bodySmall?.copyWith(color: BzColors.danger))),
+                  ]),
                 ),
-            ]),
+              ]);
+              final Widget action = g.connected
+                  ? BzButton(
+                      label: 'Disconnect',
+                      icon: BootstrapIcons.box_arrow_right,
+                      variant: BzVariant.danger,
+                      outline: true,
+                      onPressed: () async {
+                        await auth.disconnect();
+                        await ref.setSetting(Keys.googleEmail, '');
+                        BzToasts.info('Google account disconnected');
+                      },
+                    )
+                  : BzButton(
+                      label: g.busy ? 'Waiting for sign-in…' : 'Connect Google',
+                      icon: BootstrapIcons.google,
+                      loading: g.busy,
+                      onPressed: g.busy || !s.googleConfigured
+                          ? null
+                          : () async {
+                              final ok = await auth.connect();
+                              if (ok) BzToasts.success('Google connected', message: 'Calendar reminders and Gmail sending are now active.');
+                            },
+                    );
+              if (context.isPhone) {
+                return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [info, const SizedBox(height: 12), action]);
+              }
+              return Row(children: [Expanded(child: info), const SizedBox(width: 12), action]);
+            }),
           ),
           const SizedBox(height: 16),
           if (AppPlatform.isDesktop)
@@ -536,10 +548,15 @@ class _SheetsSectionState extends ConsumerState<_SheetsSection> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           const _SettingText(settingKey: Keys.sheetsSpreadsheetId, label: 'Spreadsheet link or ID', hint: 'https://docs.google.com/spreadsheets/d/…', icon: BootstrapIcons.link_45deg),
           const SizedBox(height: 14),
-          Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            BzButton(label: 'Import everything', icon: BootstrapIcons.cloud_download, loading: _importing, onPressed: _importing ? null : () => _import(formOnly: false)),
-            BzButton(label: 'New form responses only', icon: BootstrapIcons.inbox, variant: BzVariant.light, onPressed: _importing ? null : () => _import(formOnly: true)),
-            if (s.sheetsLastImportAt != null) Text('Last import ${Fmt.timeAgo(s.sheetsLastImportAt!)}', style: theme.textTheme.bodySmall),
+          // Both buttons span the card, so they are the same width whatever their labels.
+          Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            SizedBox(width: double.infinity, child: BzButton(label: 'Import everything', icon: BootstrapIcons.cloud_download, loading: _importing, onPressed: _importing ? null : () => _import(formOnly: false))),
+            const SizedBox(height: 8),
+            SizedBox(width: double.infinity, child: BzButton(label: 'New form responses only', icon: BootstrapIcons.inbox, variant: BzVariant.light, onPressed: _importing ? null : () => _import(formOnly: true))),
+            if (s.sheetsLastImportAt != null) ...[
+              const SizedBox(height: 8),
+              Text('Last import ${Fmt.timeAgo(s.sheetsLastImportAt!)}', style: theme.textTheme.bodySmall),
+            ],
           ]),
           if (!g.connected) ...[const SizedBox(height: 12), const BzAlert(variant: BzVariant.warning, message: 'Connect your Google account first (Google account section).', dense: true)],
         ]),
@@ -553,7 +570,7 @@ class _SheetsSectionState extends ConsumerState<_SheetsSection> {
           const SizedBox(height: 8),
           Row(children: [
             Expanded(child: Text('Check every', style: theme.textTheme.bodyMedium)),
-            SizedBox(width: 190, child: BzDropdown<int>(value: s.sheetsIntervalMinutes, items: const [5, 10, 15, 30, 60], labelOf: (m) => '$m minutes', onChanged: (m) => ref.setSetting(Keys.sheetsIntervalMinutes, '${m ?? 10}'))),
+            SizedBox(width: 190, child: BzDropdown<int>(title: 'Sync interval', value: s.sheetsIntervalMinutes, items: const [5, 10, 15, 30, 60], labelOf: (m) => '$m minutes', onChanged: (m) => ref.setSetting(Keys.sheetsIntervalMinutes, '${m ?? 10}'))),
           ]),
           const SizedBox(height: 12),
           BzAlert(
@@ -578,10 +595,14 @@ class _AppSection extends ConsumerWidget {
         title: 'Appearance',
         child: Row(children: [
           Expanded(child: Text('Theme', style: Theme.of(context).textTheme.bodyMedium)),
-          BzSegmented<String>(
-            value: s.themeMode,
-            options: const [('light', 'Light', BootstrapIcons.sun), ('dark', 'Dark', BootstrapIcons.moon_stars), ('system', 'System', BootstrapIcons.circle_half)],
-            onChanged: (v) => ref.setSetting(Keys.themeMode, v),
+          const SizedBox(width: 10),
+          Flexible(
+            flex: 3,
+            child: BzSegmented<String>(
+              value: s.themeMode,
+              options: const [('light', 'Light', BootstrapIcons.sun), ('dark', 'Dark', BootstrapIcons.moon_stars), ('system', 'System', BootstrapIcons.circle_half)],
+              onChanged: (v) => ref.setSetting(Keys.themeMode, v),
+            ),
           ),
         ]),
       ),

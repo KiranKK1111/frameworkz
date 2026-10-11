@@ -116,14 +116,8 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
               for (final s in LeadStatus.values)
                 if ((counts[s] ?? 0) > 0)
                   _FilterChip(label: '${s.label} (${counts[s]})', selected: _status == s, color: StatusStyle.lead(s).color, onTap: () => setState(() => _status = _status == s ? null : s)),
-              SizedBox(
-                width: 170,
-                child: BzDropdown<LeadSource?>(value: _source, items: [null, ...LeadSource.values], labelOf: (s) => s?.label ?? 'All sources', iconOf: (s) => s == null ? BootstrapIcons.funnel : StatusStyle.source(s), onChanged: (v) => setState(() => _source = v)),
-              ),
-              SizedBox(
-                width: 190,
-                child: BzDropdown<ServiceType?>(value: _service, items: [null, ...ServiceType.values], labelOf: (s) => s?.label ?? 'All services', iconOf: (s) => s == null ? BootstrapIcons.tag : StatusStyle.service(s), onChanged: (v) => setState(() => _service = v)),
-              ),
+              BzDropdown<LeadSource?>(compact: true, title: 'Source', hint: 'All sources', value: _source, items: [null, ...LeadSource.values], labelOf: (s) => s?.label ?? 'All sources', iconOf: (s) => s == null ? BootstrapIcons.funnel : StatusStyle.source(s), onChanged: (v) => setState(() => _source = v)),
+              BzDropdown<ServiceType?>(compact: true, title: 'Service', hint: 'All services', value: _service, items: [null, ...ServiceType.values], labelOf: (s) => s?.label ?? 'All services', iconOf: (s) => s == null ? BootstrapIcons.tag : StatusStyle.service(s), onChanged: (v) => setState(() => _service = v)),
             ],
           ),
           const SizedBox(height: 18),
@@ -321,10 +315,13 @@ class _LeadCard extends ConsumerWidget {
             ]),
             const SizedBox(height: 10),
             Row(children: [
-              _StatusMenu(lead: lead),
-              const SizedBox(width: 8),
-              if (lead.status.isOpen) DueBadge(lead.nextFollowUp),
-              const Spacer(),
+              Expanded(
+                child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  _StatusMenu(lead: lead),
+                  if (lead.status.isOpen) DueBadge(lead.nextFollowUp),
+                ]),
+              ),
+              const SizedBox(width: 6),
               if (lead.phone.isNotEmpty) BzIconButton(icon: BootstrapIcons.whatsapp, tooltip: 'WhatsApp', variant: BzVariant.success, onPressed: () => openWhatsApp(lead.phone)),
               if (lead.email.isNotEmpty)
                 BzIconButton(
@@ -356,7 +353,7 @@ class _StatusMenu extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           onTap: () => controller.isOpen ? controller.close() : controller.open(),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            LeadStatusBadge(lead.status),
+            Flexible(child: LeadStatusBadge(lead.status)),
             const SizedBox(width: 3),
             Icon(BootstrapIcons.chevron_down, size: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ]),

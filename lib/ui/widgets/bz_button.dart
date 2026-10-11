@@ -94,9 +94,13 @@ class _BzButtonState extends State<BzButton> {
         else if (widget.icon != null)
           Icon(widget.icon, size: iconSize, color: fg),
         if (widget.loading || widget.icon != null) const SizedBox(width: 8),
-        Text(
-          widget.label,
-          style: TextStyle(fontSize: font, fontWeight: FontWeight.w600, color: fg, letterSpacing: 0.1, decoration: widget.link && _hover ? TextDecoration.underline : null),
+        Flexible(
+          child: Text(
+            widget.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: font, fontWeight: FontWeight.w600, color: fg, letterSpacing: 0.1, decoration: widget.link && _hover ? TextDecoration.underline : null),
+          ),
         ),
         if (widget.trailingIcon != null) ...[
           const SizedBox(width: 6),

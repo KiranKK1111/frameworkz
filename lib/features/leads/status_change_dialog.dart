@@ -161,9 +161,9 @@ class _StatusBodyState extends ConsumerState<_StatusBody> {
       children: [
         Row(
           children: [
-            LeadStatusBadge(widget.lead.status, withIcon: true),
+            Flexible(child: LeadStatusBadge(widget.lead.status, withIcon: true)),
             const Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Icon(BootstrapIcons.arrow_right, size: 14)),
-            LeadStatusBadge(widget.to, soft: false, withIcon: true),
+            Flexible(child: LeadStatusBadge(widget.to, soft: false, withIcon: true)),
           ],
         ),
         const SizedBox(height: 16),
@@ -217,11 +217,8 @@ class _StatusBodyState extends ConsumerState<_StatusBody> {
           const BzAlert(variant: BzVariant.info, message: 'This lead is already linked to a client; the conversion step will be skipped.', dense: true),
         ],
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
+        BzActionRow([
             BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
-            const SizedBox(width: 8),
             BzButton(
               label: _isMeeting ? 'Schedule & save' : 'Save status',
               icon: BootstrapIcons.check2,
@@ -235,8 +232,7 @@ class _StatusBodyState extends ConsumerState<_StatusBody> {
                 openEmail: _openEmail,
               )),
             ),
-          ],
-        ),
+        ]),
       ],
     );
   }

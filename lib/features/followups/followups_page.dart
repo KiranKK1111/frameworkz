@@ -190,9 +190,13 @@ class _FollowUpRow extends ConsumerWidget {
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              if (pending) DueBadge(fu.dueAt, hasTime: fu.hasTime) else FollowUpStatusBadge(fu.status),
-              if (lead != null) ...[const SizedBox(width: 6), LeadStatusBadge(lead.status)],
-              const Spacer(),
+              Expanded(
+                child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  if (pending) DueBadge(fu.dueAt, hasTime: fu.hasTime) else FollowUpStatusBadge(fu.status),
+                  if (lead != null) LeadStatusBadge(lead.status),
+                ]),
+              ),
+              const SizedBox(width: 6),
               if (pending) ...[
                 if (phone.isNotEmpty) BzIconButton(icon: BootstrapIcons.whatsapp, tooltip: 'WhatsApp', variant: BzVariant.success, onPressed: () => openWhatsApp(phone)),
                 if (fu.meetLink.isNotEmpty) BzIconButton(icon: BootstrapIcons.camera_video, tooltip: 'Join Google Meet', variant: BzVariant.primary, onPressed: () => launchUrl(Uri.parse(fu.meetLink))),
@@ -224,16 +228,16 @@ class _FollowUpRow extends ConsumerWidget {
               children: [
                 Text(fu.title, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, decoration: fu.status == FollowUpStatus.done ? TextDecoration.lineThrough : null)),
                 const SizedBox(height: 2),
-                Row(children: [
-                  if (who.isNotEmpty) ...[
-                    Icon(lead != null ? BootstrapIcons.funnel : BootstrapIcons.people, size: 11, color: theme.colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text([who, if (contact.isNotEmpty) contact].join(' · '), style: theme.textTheme.bodySmall),
-                    const SizedBox(width: 10),
-                  ],
+                Wrap(spacing: 10, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  if (who.isNotEmpty)
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(lead != null ? BootstrapIcons.funnel : BootstrapIcons.people, size: 11, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Flexible(child: Text([who, if (contact.isNotEmpty) contact].join(' · '), style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ]),
                   Text(fu.hasTime ? '${Fmt.time(fu.dueAt)} · ${fu.durationMinutes} min' : fu.type.label, style: theme.textTheme.bodySmall),
-                  if (fu.calendarEventId != null) ...[const SizedBox(width: 10), const Icon(BootstrapIcons.google, size: 10, color: BzColors.success)],
-                  if (fu.outcome.isNotEmpty) ...[const SizedBox(width: 10), Expanded(child: Text('→ ${fu.outcome}', style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic), overflow: TextOverflow.ellipsis))],
+                  if (fu.calendarEventId != null) const Icon(BootstrapIcons.google, size: 10, color: BzColors.success),
+                  if (fu.outcome.isNotEmpty) Text('→ ${fu.outcome}', style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ]),
               ],
             ),

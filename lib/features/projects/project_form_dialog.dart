@@ -183,14 +183,10 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
             ),
           ],
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
-              const SizedBox(width: 8),
-              BzButton(label: widget.existing == null ? 'Create project' : 'Save changes', icon: BootstrapIcons.check2, loading: _saving, onPressed: _saving ? null : _save),
-            ],
-          ),
+          BzActionRow([
+            BzButton(label: 'Cancel', variant: BzVariant.light, onPressed: () => Navigator.of(context).pop()),
+            BzButton(label: widget.existing == null ? 'Create project' : 'Save changes', icon: BootstrapIcons.check2, loading: _saving, onPressed: _saving ? null : _save),
+          ]),
         ],
       ),
     );

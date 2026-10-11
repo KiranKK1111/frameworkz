@@ -118,7 +118,9 @@ class _IntroOverlayState extends State<IntroOverlay> {
                 ),
                 SizedBox(height: compact ? 26 : 34),
                 // Word mark, letter by letter
-                Row(
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (var i = 0; i < word.length; i++)
@@ -133,6 +135,7 @@ class _IntroOverlayState extends State<IntroOverlay> {
                         ),
                       ).animate(delay: (750 + i * 55).ms).fadeIn(duration: 260.ms).slideY(begin: 0.6, end: 0, duration: 420.ms, curve: Curves.easeOutCubic),
                   ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(

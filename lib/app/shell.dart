@@ -160,11 +160,15 @@ class _MobileShell extends ConsumerWidget {
                 children: [
                   _Logo(size: 32),
                   const SizedBox(width: 10),
-                  Text(
-                    'FrameWorkz',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
+                  Flexible(
+                    child: Text(
+                      'FrameWorkz',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                 ],
@@ -527,7 +531,12 @@ class _Sidebar extends ConsumerWidget {
         color: theme.colorScheme.surface,
         border: Border(right: BorderSide(color: theme.colorScheme.outline)),
       ),
-      child: Column(
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: width,
+          maxWidth: width,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
@@ -682,6 +691,8 @@ class _Sidebar extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }
