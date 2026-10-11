@@ -1,0 +1,159 @@
+# Builds installers for every platform on GitHub's hosted runners and attaches
+# them to a GitHub Release. macOS and iOS are built on a cloud Mac, so no local
+# Mac is needed.
+#
+# Trigger: push a tag like v1.0.0, or run manually from the Actions tab
+# ("Run workflow") to get downloadable artifacts without a release.
+#
+# Optional secrets for a signed, notarized macOS app and a TestFlight-ready iOS
+# build (all builds still succeed without them, producing unsigned packages):
+#   MACOS_SIGN_IDENTITY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD
+#   IOS_P12_BASE64, IOS_P12_PASSWORD, IOS_PROVISIONING_PROFILE_BASE64, IOS_TEAM_ID
+name: Release installers
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  FLUTTER_CHANNEL: stable
+
+jobs:
+  windows:
+    name: Windows (.exe installer + portable zip)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+      - name: Version from tag
+        id: v
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build windows --release --build-name=${{ steps.v.outputs.version || '1.0.0' }}
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Download VC++ redistributable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force installer/windows/redist | Out-Null
+          Invoke-WebRequest https://aka.ms/vs/17/release/vc_redist.x64.exe -OutFile installer/windows/redist/vc_redist.x64.exe
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.v.outputs.version || '1.0.0' }}" installer\windows\FrameWorkz.iss
+      - name: Portable zip
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath installer/dist/FrameWorkz-${{ steps.v.outputs.version || '1.0.0' }}-windows-portable.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: installer/dist/*
+
+  macos:
+    name: macOS (.dmg)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+      - name: Version from tag
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: npm install -g create-dmg
+      - name: Build DMG
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          chmod +x installer/macos/make_dmg.sh
+          ./installer/macos/make_dmg.sh "${{ steps.v.outputs.version || '1.0.0' }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: installer/dist/*.dmg
+
+  ios:
+    name: iOS (.ipa)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+      - name: Version from tag
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build IPA
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          chmod +x installer/ios/build_ipa.sh
+          ./installer/ios/build_ipa.sh "${{ steps.v.outputs.version || '1.0.0' }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: installer/dist/*.ipa
+
+  android:
+    name: Android (.apk + .aab)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+      - name: Version from tag
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build apk --release --build-name=${{ steps.v.outputs.version || '1.0.0' }}
+      - run: flutter build appbundle --release --build-name=${{ steps.v.outputs.version || '1.0.0' }}
+      - name: Collect
+        run: |
+          mkdir -p installer/dist
+          cp build/app/outputs/flutter-apk/app-release.apk installer/dist/FrameWorkz-${{ steps.v.outputs.version || '1.0.0' }}.apk
+          cp build/app/outputs/bundle/release/app-release.aab installer/dist/FrameWorkz-${{ steps.v.outputs.version || '1.0.0' }}.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: installer/dist/*
+
+  release:
+    needs: [windows, macos, ios, android]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
